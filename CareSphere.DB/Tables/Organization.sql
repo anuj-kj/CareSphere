@@ -1,0 +1,8 @@
+﻿CREATE TABLE Organization (
+    OrganizationId INT IDENTITY(1,1) PRIMARY KEY,
+    Name NVARCHAR(255) NOT NULL,
+    Address NVARCHAR(MAX) NULL,
+    PhoneNumber NVARCHAR(15) NULL,
+    Email NVARCHAR(255) NULL,
+    CreatedAt DATETIME DEFAULT GETDATE() NOT NULL
+);

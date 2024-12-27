@@ -1,0 +1,14 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CareSphere.Data.Core\CareSphere.Data.Core.csproj" />
+    <ProjectReference Include="..\CareSphere.Domains\CareSphere.Domains.csproj" />
+  </ItemGroup>
+
+</Project>

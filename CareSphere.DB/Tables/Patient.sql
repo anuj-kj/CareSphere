@@ -1,0 +1,10 @@
+﻿CREATE TABLE Patient (
+    PatientId INT IDENTITY(1,1) PRIMARY KEY,
+    Name NVARCHAR(255) NOT NULL,
+    DOB DATE NULL,
+    PhoneNumber NVARCHAR(15) NULL,
+    Email NVARCHAR(255) NULL,
+    Address NVARCHAR(MAX) NULL,
+    MedicalHistory NVARCHAR(MAX) NULL,
+    CreatedAt DATETIME DEFAULT GETDATE() NOT NULL
+);
