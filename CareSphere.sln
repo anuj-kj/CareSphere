@@ -33,6 +33,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "01. Web Application", "01. 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CareSphere.Web.Server", "CareSphere.Web.Server\CareSphere.Web.Server.csproj", "{D2AEF408-6B64-4B49-9BDF-AF1E1FE933B2}"
 EndProject
+Project("{54A90642-561A-4BB1-A94E-469ADEE60C69}") = "caresphere.web.client", "CareSphere.Web.Client\caresphere.web.client.esproj", "{EF81008B-E1B9-4B0B-8CC0-7E4B776AAD03}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -81,6 +83,12 @@ Global
 		{D2AEF408-6B64-4B49-9BDF-AF1E1FE933B2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D2AEF408-6B64-4B49-9BDF-AF1E1FE933B2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D2AEF408-6B64-4B49-9BDF-AF1E1FE933B2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EF81008B-E1B9-4B0B-8CC0-7E4B776AAD03}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EF81008B-E1B9-4B0B-8CC0-7E4B776AAD03}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EF81008B-E1B9-4B0B-8CC0-7E4B776AAD03}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
+		{EF81008B-E1B9-4B0B-8CC0-7E4B776AAD03}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EF81008B-E1B9-4B0B-8CC0-7E4B776AAD03}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EF81008B-E1B9-4B0B-8CC0-7E4B776AAD03}.Release|Any CPU.Deploy.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -96,5 +104,6 @@ Global
 		{06541C7B-8F30-4B3B-8E0C-D4A9169AFC8C} = {83858103-42A2-4C2C-B966-06887158F0DB}
 		{434DCCED-5689-4864-B00E-653E61DAA1AC} = {0114CDB4-B476-47B5-8E55-C2B5036E2D63}
 		{D2AEF408-6B64-4B49-9BDF-AF1E1FE933B2} = {A592052B-B785-4A5F-BBA6-ADFFE37905C6}
+		{EF81008B-E1B9-4B0B-8CC0-7E4B776AAD03} = {A592052B-B785-4A5F-BBA6-ADFFE37905C6}
 	EndGlobalSection
 EndGlobal
