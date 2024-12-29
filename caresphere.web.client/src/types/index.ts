@@ -1,16 +1,13 @@
-export type ExampleType = {
-  id: number;
-  name: string;
-  description?: string;
-};
-
 export interface User {
   id: string;
-  username: string;
+  name: string;
   email: string;
+  // Add more user properties as needed
 }
 
-export type ApiResponse<T> = {
-  data: T;
-  error?: string;
-};
+export interface Product {
+  id: string;
+  name: string;
+  price: number;
+  // Add more product properties as needed
+}
