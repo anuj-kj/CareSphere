@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 using CareSphere.Data.Core.DataContexts;
@@ -29,6 +30,10 @@ namespace CareSphere.Data.Core.Impl
         public void Update(T entity) => _dbSet.Update(entity);
 
         public void Delete(T entity) => _dbSet.Remove(entity);
+        public async Task<T> GetByPropertyAsync(Expression<Func<T, bool>> predicate)
+        {
+            return await _dbSet.FirstOrDefaultAsync(predicate);
+        }
     }
 
 }

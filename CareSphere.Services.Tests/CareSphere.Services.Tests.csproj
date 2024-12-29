@@ -20,6 +20,7 @@
 	<ItemGroup>
 	  <ProjectReference Include="..\CareSphere.Data.Configurations\CareSphere.Data.Configurations.csproj" />
 	  <ProjectReference Include="..\CareSphere.Services.Configurations\CareSphere.Services.Configurations.csproj" />
+	  <ProjectReference Include="..\CareSphere.Services.Users\CareSphere.Services.Users.csproj" />
 	</ItemGroup>
 	<ItemGroup>
 	  <None Update="appsettings.json">

@@ -5,29 +5,70 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using CareSphere.Services.Users.Interfaces;
+using CareSphere.Domains.Core;
+using CareSphere.Web.Server.Requests;
 
 [ApiController]
 [Route("api/[controller]")]
 public class AuthController : ControllerBase
 {
     private readonly IConfiguration _configuration;
+    private readonly IUserService _userService; 
 
-    public AuthController(IConfiguration configuration)
+    public AuthController(IConfiguration configuration, IUserService userService)
     {
         _configuration = configuration;
+        _userService = userService;
     }
 
     [HttpPost("login")]
-    public IActionResult Login([FromBody] LoginModel login)
+    public async Task<IActionResult> Login([FromBody] LoginModel login)
     {
-        if (login.Username == "test" && login.Password == "password")
+        try
         {
+            await Authenticate(login);
             var token = GenerateJwtToken(login.Username);
-            return Ok(new { Token =token});
+            return Ok(new { Token = token });
+        }
+        catch(ArgumentException ex)
+        {
+            return Unauthorized(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(ex.Message);
+        }
+        
+    }
+    [HttpPost("register")]
+    public async Task<IActionResult> Register([FromBody] RegisterReuest request)
+    {
+        try
+        {
+            var user = new User
+            {
+                Email = request.Email,
+                Name = request.Name,
+                Username = request.Email
+            };
+            var password = request.Password;
+            var newUser = await _userService.CreateUser(user, password, true);
+            return Ok(new { UserId=newUser.UserId });
+        }
+       
+        catch (Exception ex)
+        {
+            return BadRequest(ex.Message);
         }
 
-        return Unauthorized();
     }
+
+    private async Task<User> Authenticate(LoginModel login)
+    {
+      return await _userService.GetUserByCredential(login.Username, login.Password);
+    }
+
     [HttpGet("google-login")]
     public IActionResult GoogleLogin()
     {
@@ -57,9 +98,26 @@ public class AuthController : ControllerBase
                 claim.Type,
                 claim.Value
             });
+        await CreateUser(result);
 
         var token = GenerateJwtToken(result.Principal.Identity.Name);
         return Redirect($"http://localhost:49907/auth/callback?token={token}");
+    }
+    private async Task<User> CreateUser(AuthenticateResult result)
+    {
+        var username = result.Principal.Identity.Name;
+        var email = result.Principal.FindFirst(ClaimTypes.Email)?.Value;
+        var firstName = result.Principal.FindFirst(ClaimTypes.GivenName)?.Value;
+        var lastName = result.Principal.FindFirst(ClaimTypes.Surname)?.Value;    
+       
+            var newUser = new User
+            {
+                Username = username,
+                Email = email,
+                Name = $"{firstName} {lastName}",                
+            };
+            await _userService.CreateUser(newUser);
+        return newUser;
     }
 
     private string GenerateJwtToken(string username)
