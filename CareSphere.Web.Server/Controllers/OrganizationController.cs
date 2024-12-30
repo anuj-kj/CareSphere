@@ -1,6 +1,7 @@
 ﻿using CareSphere.Domains.Core;
 using CareSphere.Services.Organizations.Impl;
 using CareSphere.Services.Organizations.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -16,7 +17,8 @@ namespace CareSphere.Web.Server.Controllers
         {
             OrganizationService = organizationService;
         }
-        [HttpGet]
+        [Authorize]
+        [HttpGet("all")]
         /// <summary>
         ///  Returns all the organizations
         /// </summary>

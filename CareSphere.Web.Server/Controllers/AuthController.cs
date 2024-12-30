@@ -8,6 +8,7 @@ using System.Text;
 using CareSphere.Services.Users.Interfaces;
 using CareSphere.Domains.Core;
 using CareSphere.Web.Server.Requests;
+using System.Data;
 
 [ApiController]
 [Route("api/[controller]")]
@@ -27,8 +28,8 @@ public class AuthController : ControllerBase
     {
         try
         {
-            await Authenticate(login);
-            var token = GenerateJwtToken(login.Username);
+           var user= await Authenticate(login);
+            var token = GenerateJwtToken(user);
             return Ok(new { Token = token });
         }
         catch(ArgumentException ex)
@@ -98,9 +99,9 @@ public class AuthController : ControllerBase
                 claim.Type,
                 claim.Value
             });
-        await CreateUser(result);
+      var user=  await CreateUser(result);
 
-        var token = GenerateJwtToken(result.Principal.Identity.Name);
+        var token = GenerateJwtToken(user);
         return Redirect($"http://localhost:49907/auth/callback?token={token}");
     }
     private async Task<User> CreateUser(AuthenticateResult result)
@@ -120,15 +121,19 @@ public class AuthController : ControllerBase
         return newUser;
     }
 
-    private string GenerateJwtToken(string username)
+    private string GenerateJwtToken(User user)
     {
         var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
         var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
 
         var claims = new[]
         {
-            new Claim(JwtRegisteredClaimNames.Sub, username),
-            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+            new Claim(JwtRegisteredClaimNames.Sub, user.Name),
+            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+            new Claim(ClaimTypes.Name, user.Name),
+            new Claim(ClaimTypes.Email, user.Email),
+            new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString()),
+            new Claim(ClaimTypes.Role, user.Role)
         };
 
         var token = new JwtSecurityToken(
