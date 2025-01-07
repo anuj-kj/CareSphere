@@ -14,6 +14,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\CareSphere.Data.Core\CareSphere.Data.Core.csproj" />
+    <ProjectReference Include="..\CareSphere.Data.Orders\CareSphere.Data.Orders.csproj" />
     <ProjectReference Include="..\CareSphere.Data.Organaizations\CareSphere.Data.Organaizations.csproj" />
     <ProjectReference Include="..\CareSphere.Domains\CareSphere.Domains.csproj" />
   </ItemGroup>

@@ -6,6 +6,10 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using CareSphere.Domains.Events;
+using CareSphere.Domains.Orders;
+using CareSphere.Services.Orders.Events.Handlers;
+using Microsoft.Extensions.Hosting;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -66,6 +70,12 @@ builder.Services.AddAuthentication(options =>
     options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
 });
 var app = builder.Build();
+// Register event handlers with the DomainEventPublisher
+var domainEventPublisher = app.Services.GetRequiredService<IDomainEventPublisher>();
+var orderEventHandlers = app.Services.GetRequiredService<OrderEventHandlers>();
+
+domainEventPublisher.RegisterHandler<OrderStatusChangedEvent>(orderEventHandlers.HandleOrderStatusChanged);
+domainEventPublisher.RegisterHandler<OrderItemAddedEvent>(orderEventHandlers.HandleOrderItemAdded);
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

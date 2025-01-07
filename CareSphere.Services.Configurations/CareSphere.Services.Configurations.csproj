@@ -11,6 +11,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\CareSphere.Services.Orders\CareSphere.Services.Orders.csproj" />
     <ProjectReference Include="..\CareSphere.Services.Organizations\CareSphere.Services.Organizations.csproj" />
     <ProjectReference Include="..\CareSphere.Services.Users\CareSphere.Services.Users.csproj" />
   </ItemGroup>

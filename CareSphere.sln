@@ -37,6 +37,10 @@ Project("{54A90642-561A-4BB1-A94E-469ADEE60C69}") = "caresphere.web.client", "Ca
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CareSphere.Services.Users", "CareSphere.Services.Users\CareSphere.Services.Users.csproj", "{934819DA-3004-4493-B86A-E7EF60A6680B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CareSphere.Data.Orders", "CareSphere.Data.Orders\CareSphere.Data.Orders.csproj", "{3DBA46B1-C8D0-4B96-86B5-B1FF2E42E594}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CareSphere.Services.Orders", "CareSphere.Services.Orders\CareSphere.Services.Orders.csproj", "{4F64432E-35FA-4C2E-8E31-5959BD2F15C0}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -95,6 +99,14 @@ Global
 		{934819DA-3004-4493-B86A-E7EF60A6680B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{934819DA-3004-4493-B86A-E7EF60A6680B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{934819DA-3004-4493-B86A-E7EF60A6680B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3DBA46B1-C8D0-4B96-86B5-B1FF2E42E594}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3DBA46B1-C8D0-4B96-86B5-B1FF2E42E594}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3DBA46B1-C8D0-4B96-86B5-B1FF2E42E594}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3DBA46B1-C8D0-4B96-86B5-B1FF2E42E594}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4F64432E-35FA-4C2E-8E31-5959BD2F15C0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4F64432E-35FA-4C2E-8E31-5959BD2F15C0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4F64432E-35FA-4C2E-8E31-5959BD2F15C0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4F64432E-35FA-4C2E-8E31-5959BD2F15C0}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -112,5 +124,7 @@ Global
 		{D2AEF408-6B64-4B49-9BDF-AF1E1FE933B2} = {A592052B-B785-4A5F-BBA6-ADFFE37905C6}
 		{EF81008B-E1B9-4B0B-8CC0-7E4B776AAD03} = {A592052B-B785-4A5F-BBA6-ADFFE37905C6}
 		{934819DA-3004-4493-B86A-E7EF60A6680B} = {83858103-42A2-4C2C-B966-06887158F0DB}
+		{3DBA46B1-C8D0-4B96-86B5-B1FF2E42E594} = {D2D063AB-B587-4A35-9439-7789A7511503}
+		{4F64432E-35FA-4C2E-8E31-5959BD2F15C0} = {83858103-42A2-4C2C-B966-06887158F0DB}
 	EndGlobalSection
 EndGlobal

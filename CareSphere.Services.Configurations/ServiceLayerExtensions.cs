@@ -1,4 +1,6 @@
-﻿using CareSphere.Services.Organizations.Impl;
+﻿using CareSphere.Services.Orders.Impl;
+using CareSphere.Services.Orders.Interfaces;
+using CareSphere.Services.Organizations.Impl;
 using CareSphere.Services.Organizations.Interfaces;
 using CareSphere.Services.Users.Impl;
 using CareSphere.Services.Users.Interfaces;
@@ -12,6 +14,7 @@ namespace CareSphere.Services.Configurations
         {
             services.AddScoped<IOrganizationService, OrganizationService>();
             services.AddScoped<IUserService, UserService>();
+            services.AddScoped<IOrderService, OrderService>();
             return services;
         }
 
