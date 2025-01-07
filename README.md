@@ -1,8 +1,7 @@
 # CareSphere Sample Application
 
 ## Overview
-CareSphere is a sample solution built using a layered architecture to ensure separation of concerns, scalability, and maintainability. This document provides an overview of the tech stack, project structure, and design patterns used in the solution.
-Added sample Domain-Driven Design (DDD) principles for Orders
+CareSphere is a sample solution  using Domain Driven Design (DDD) and layered architecture to ensure separation of concerns, scalability, and maintainability. This document provides an overview of the tech stack, project structure, and design patterns used in the solution.
 
 ## Tech Stack
 - **Backend**: ASP.NET Core
