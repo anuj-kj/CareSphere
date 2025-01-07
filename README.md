@@ -2,6 +2,7 @@
 
 ## Overview
 CareSphere is a sample solution built using a layered architecture to ensure separation of concerns, scalability, and maintainability. This document provides an overview of the tech stack, project structure, and design patterns used in the solution.
+Added sample Domain-Driven Design (DDD) principles for Orders
 
 ## Tech Stack
 - **Backend**: ASP.NET Core
@@ -11,6 +12,52 @@ CareSphere is a sample solution built using a layered architecture to ensure sep
 - **Unit Testing**: xUnit, Moq
 - **Dependency Injection**: Built-in ASP.NET Core DI
 - **ORM**: Entity Framework Core
+
+
+## Domain-Driven Design (DDD) for Orders
+
+### Key Concepts
+
+1. **Entities**: Objects that have a distinct identity that runs through time and different states. For example, an `Order` entity.
+2. **Value Objects**: Objects that describe some characteristics or attributes but have no conceptual identity. For example, `OrderItem`.
+3. **Aggregates**: A cluster of domain objects that can be treated as a single unit. For example, an `Order` aggregate might include `OrderItems`.
+4. **Repositories**: Mechanisms for encapsulating storage, retrieval, and search behavior which emulates a collection of objects.
+5. **Domain Events**: Events that are significant to the domain and are used to communicate between different parts of the system.
+
+### Order Domain Implementation
+
+#### Entities
+
+- **Order**: Represents a customer's order.
+- **OrderItem**: Represents an item within an order.
+
+#### Value Objects
+
+- **OrderStatus**: Represents the status of an order (e.g., Pending, Shipped, Delivered).
+
+#### Aggregates
+
+- **OrderAggregate**: The root aggregate that includes `Order` and its `OrderItems`.
+
+#### Repositories
+
+- **IOrderRepository**: Interface for order repository.
+- **OrderRepository**: Implementation of the order repository.
+#### Services
+
+- **IOrderService**: Interface for order service.
+- **OrderService**: Implementation of the order service.
+#### Domain Events
+
+- **OrderStatusChangedEvent**: Event triggered when the status of an order changes.
+- **OrderItemAddedEvent**: Event triggered when an item is added to an order.
+
+#### Event Handlers
+
+- **OrderEventHandlers**: Handles domain events related to orders.
+
+
+
 
 ## Project Structure
 The solution is divided into several projects, each representing a different layer of the application:
