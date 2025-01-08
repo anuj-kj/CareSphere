@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using CareSphere.Data.Core.Interfaces;
 using CareSphere.Data.Orders.interfaces;
 using CareSphere.Domains.Events;
 using CareSphere.Domains.Orders;
@@ -13,30 +14,41 @@ namespace CareSphere.Services.Orders.Impl
 {
     public class OrderService : IOrderService
     {
+        private readonly IUnitOfWork _unitOfWork;
         private readonly IOrderRepository _orderRepository;
         private readonly IDomainEventPublisher _domainEventPublisher;
 
-        public OrderService(IOrderRepository orderRepository, IDomainEventPublisher domainEventPublisher)
+        public OrderService(IOrderRepository orderRepository, IDomainEventPublisher domainEventPublisher, IUnitOfWork unitOfWork)
         {
             _orderRepository = orderRepository;
             _domainEventPublisher = domainEventPublisher;
+            _unitOfWork = unitOfWork;
         }
 
         public async Task CreateOrderAsync(List<OrderItemDto> orderItems)
         {
-            var order = new Order();
-            foreach (var item in orderItems)
+            try
             {
-                order.AddItem(order.Id, item.ProductId, item.Quantity, item.Price);
-            }
-            await _orderRepository.AddAsync(order);
+                var order = new Order();
+                foreach (var item in orderItems)
+                {
+                    order.AddItem(order.Id, item.ProductId, item.Quantity, item.Price);
+                }
+                await _orderRepository.AddAsync(order);
+                await _unitOfWork.CommitAsync();
 
-            foreach (var domainEvent in order.DomainEvents)
+                foreach (var domainEvent in order.DomainEvents)
+                {
+                    _domainEventPublisher.Publish(domainEvent);
+                }
+
+                order.ClearDomainEvents();
+            }
+            catch (Exception ex)
             {
-                _domainEventPublisher.Publish(domainEvent);
+                _unitOfWork.Rollback();
+                throw new Exception("Error creating order", ex);
             }
-
-            order.ClearDomainEvents();
         }
 
         public async Task<Order> GetOrderAsync(Guid orderId)
@@ -46,16 +58,24 @@ namespace CareSphere.Services.Orders.Impl
 
         public async Task UpdateOrderStatusAsync(Guid orderId, OrderStatus status)
         {
-            var order = await _orderRepository.GetByGuidIdAsync(orderId);
-            order.UpdateStatus(status);
-            _orderRepository.Update(order);
-
-            foreach (var domainEvent in order.DomainEvents)
+            try
             {
-                _domainEventPublisher.Publish(domainEvent);
+                var order = await _orderRepository.GetByGuidIdAsync(orderId);
+                order.UpdateStatus(status);
+                _orderRepository.Update(order);
+                await _unitOfWork.CommitAsync();
+                foreach (var domainEvent in order.DomainEvents)
+                {
+                    _domainEventPublisher.Publish(domainEvent);
+                }
+                order.ClearDomainEvents();
             }
-
-            order.ClearDomainEvents();
+            catch (Exception ex)
+            {
+                _unitOfWork.Rollback();            
+                throw new Exception("Error updating order status", ex);
+            }
+           
         }
 
         public async Task DeleteOrderAsync(Guid orderId)
