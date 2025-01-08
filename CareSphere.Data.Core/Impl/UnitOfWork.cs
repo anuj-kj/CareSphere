@@ -10,13 +10,13 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace CareSphere.Data.Core.Impl
 {
-    public class UnitOfWork : IUnitOfWork
+    public class UnitOfWork<TContext> : IUnitOfWork where TContext : DbContext
     {
-        private readonly CareSphereDbContext _context;
+        private readonly TContext _context;
         private readonly IServiceProvider _serviceProvider;
         private readonly Dictionary<Type, object> _repositories = new();
 
-        public UnitOfWork(CareSphereDbContext context, IServiceProvider serviceProvider)
+        public UnitOfWork(TContext context, IServiceProvider serviceProvider)
         {
             _context = context;
             _serviceProvider = serviceProvider;

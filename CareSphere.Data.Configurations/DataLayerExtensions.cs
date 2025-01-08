@@ -20,7 +20,15 @@ namespace CareSphere.Data.Configurations
             // Add OrderDbContext
             services.AddDbContext<OrderDbContext>(options =>
                 options.UseSqlServer(connectionString));
-            services.AddScoped<IUnitOfWork, UnitOfWork>();
+            // Register UnitOfWork for CareSphereDbContext
+            services.AddScoped<IUnitOfWork, UnitOfWork<CareSphereDbContext>>();
+
+            // Register UnitOfWork for OrderDbContext
+            services.AddScoped<IUnitOfWork, UnitOfWork<OrderDbContext>>();
+
+            services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
+            services.AddScoped<IOrganizationRepository, OrganizationRepository>();
+            services.AddScoped<IOrderRepository, OrderRepository>();
             services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
             services.AddScoped<IOrganizationRepository, OrganizationRepository>();
             services.AddScoped<IOrderRepository, OrderRepository>();
