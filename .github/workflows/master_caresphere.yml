@@ -27,17 +27,17 @@ jobs:
 
       - name: Build solution
         run: |
-        # Use MSBuild to build the solution
-        "C:/Program Files/Microsoft Visual Studio/2022/BuildTools/MSBuild/Current/Bin/MSBuild.exe" CareSphere.sln /p:Configuration=Release
+          # Use MSBuild to build the solution
+          C:\Program Files\Microsoft Visual Studio\2022\BuildTools\MSBuild\Current\Bin\MSBuild.exe %GITHUB_WORKSPACE%\CareSphere.sln /p:Configuration=Release
 
       - name: dotnet publish
-        run: dotnet publish -c Release -o "${{env.DOTNET_ROOT}}/myapp"
+        run: dotnet publish -c Release -o myapp
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: .net-app
-          path: ${{env.DOTNET_ROOT}}/myapp
+          path: myapp
 
   deploy:
     runs-on: windows-latest
