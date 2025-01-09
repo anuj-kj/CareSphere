@@ -21,18 +21,22 @@ jobs:
       - name: Install Visual Studio Build Tools
         run: choco install visualstudio2022buildtools --package-parameters "--add Microsoft.VisualStudio.Workload.DataTools --includeRecommended --includeOptional"
 
+      - name: Verify Visual Studio Build Tools Installation
+        run: |
+          if exist "C:\Program Files\Microsoft Visual Studio\2022\BuildTools\MSBuild\Current\Bin\MSBuild.exe" (
+            echo "MSBuild.exe found"
+          ) else (
+            echo "MSBuild.exe not found"
+            exit /b 1
+          )
+
       - name: Restore NuGet packages
         run: dotnet restore
 
       - name: Build solution
         shell: cmd
         run: |
-          if exist "C:\Program Files\Microsoft Visual Studio\2022\BuildTools\MSBuild\Current\Bin\MSBuild.exe" (
-            "C:\Program Files\Microsoft Visual Studio\2022\BuildTools\MSBuild\Current\Bin\MSBuild.exe" "${{ github.workspace }}\CareSphere.sln" /p:Configuration=Release
-          ) else (
-            echo "MSBuild.exe not found"
-            exit /b 1
-          )
+          "C:\Program Files\Microsoft Visual Studio\2022\BuildTools\MSBuild\Current\Bin\MSBuild.exe" "${{ github.workspace }}\CareSphere.sln" /p:Configuration=Release
 
       - name: dotnet publish
         run: dotnet publish -c Release -o myapp
