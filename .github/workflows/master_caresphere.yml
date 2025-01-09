@@ -27,7 +27,6 @@ jobs:
       - name: Build solution
         shell: cmd
         run: |
-          # Use MSBuild to build the solution
           "C:\Program Files\Microsoft Visual Studio\2022\BuildTools\MSBuild\Current\Bin\MSBuild.exe" "%GITHUB_WORKSPACE%\CareSphere.sln" /p:Configuration=Release
 
       - name: dotnet publish
