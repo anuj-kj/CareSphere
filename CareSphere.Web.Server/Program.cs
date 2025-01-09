@@ -19,18 +19,20 @@ builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 
 // Load configuration settings based on the environment
-if (builder.Environment.IsDevelopment())
-{
-    builder.Configuration
-        .SetBasePath(Directory.GetCurrentDirectory())
-        .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-        .AddEnvironmentVariables();
-}
-else
-{
-    builder.Configuration
-        .AddEnvironmentVariables();
-}
+//if (builder.Environment.IsDevelopment())
+//{
+//    builder.Configuration
+//        .SetBasePath(Directory.GetCurrentDirectory())
+//        .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+//        .AddEnvironmentVariables();
+//}
+//else
+//{
+//    builder.Configuration
+//        .AddEnvironmentVariables();
+//}
+builder.Configuration
+      .AddEnvironmentVariables();
 
 // Add services to the container.
 builder.Services.AddControllers();
