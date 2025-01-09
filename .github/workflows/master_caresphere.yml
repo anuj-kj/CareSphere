@@ -21,6 +21,12 @@ jobs:
         with:
           dotnet-version: '9.x'
 
+      - name: Install MSBuild and SSDT workloads
+        run: |
+          choco install visualstudio2019buildtools --package-parameters "--add Microsoft.VisualStudio.Workload.DataBuildTools --includeRecommended --includeOptional"
+          choco install microsoft-build-tools --version 16.0.461
+          dotnet workload install microsoft.data.tools.msbuild
+
       - name: Build with dotnet
         run: dotnet build --configuration Release
 
