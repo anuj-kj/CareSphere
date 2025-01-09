@@ -10,8 +10,13 @@ using CareSphere.Domains.Events;
 using CareSphere.Domains.Orders;
 using CareSphere.Services.Orders.Events.Handlers;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Configure logging
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
 
 // Load configuration settings based on the environment
 if (builder.Environment.IsDevelopment())
@@ -19,7 +24,6 @@ if (builder.Environment.IsDevelopment())
     builder.Configuration
         .SetBasePath(Directory.GetCurrentDirectory())
         .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-        .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true)
         .AddEnvironmentVariables();
 }
 else
@@ -83,29 +87,40 @@ builder.Services.AddAuthentication(options =>
     options.ClientId = builder.Configuration["Authentication:Google:ClientId"];
     options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
 });
-var app = builder.Build();
-// Register event handlers with the DomainEventPublisher
-var domainEventPublisher = app.Services.GetRequiredService<IDomainEventPublisher>();
-var orderEventHandlers = app.Services.GetRequiredService<OrderEventHandlers>();
 
-domainEventPublisher.RegisterHandler<OrderStatusChangedEvent>(orderEventHandlers.HandleOrderStatusChanged);
-domainEventPublisher.RegisterHandler<OrderItemAddedEvent>(orderEventHandlers.HandleOrderItemAdded);
-
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+try
 {
-    app.MapOpenApi();
+    var app = builder.Build();
+
+    // Register event handlers with the DomainEventPublisher
+    var domainEventPublisher = app.Services.GetRequiredService<IDomainEventPublisher>();
+    var orderEventHandlers = app.Services.GetRequiredService<OrderEventHandlers>();
+
+    domainEventPublisher.RegisterHandler<OrderStatusChangedEvent>(orderEventHandlers.HandleOrderStatusChanged);
+    domainEventPublisher.RegisterHandler<OrderItemAddedEvent>(orderEventHandlers.HandleOrderItemAdded);
+
+    // Configure the HTTP request pipeline.
+    if (app.Environment.IsDevelopment())
+    {
+        app.MapOpenApi();
+    }
+
+    app.UseHttpsRedirection();
+    app.UseRouting();
+
+    // Enable CORS
+    app.UseCors("AllowAllOrigins");
+
+    app.UseAuthentication();
+    app.UseAuthorization();
+
+    app.MapControllers();
+
+    app.Run();
 }
-
-app.UseHttpsRedirection();
-app.UseRouting();
-
-// Enable CORS
-app.UseCors("AllowAllOrigins");
-
-app.UseAuthentication();
-app.UseAuthorization();
-
-app.MapControllers();
-
-app.Run();
+catch (Exception ex)
+{
+    var logger = builder.Services.BuildServiceProvider().GetRequiredService<ILogger<Program>>();
+    logger.LogError(ex, "An error occurred during application startup.");
+    throw;
+}
