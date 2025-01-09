@@ -1,3 +1,6 @@
+# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
+# More GitHub Actions for Azure: https://github.com/Azure/actions
+
 name: Build and deploy ASP.Net Core app to Azure Web App - caresphere
 
 on:
@@ -18,34 +21,17 @@ jobs:
         with:
           dotnet-version: '9.x'
 
-      - name: Install Visual Studio Build Tools
-        run: choco install visualstudio2022buildtools --package-parameters "--add Microsoft.VisualStudio.Workload.DataTools --includeRecommended --includeOptional"
-
-      - name: Verify Visual Studio Build Tools Installation
-        run: |
-          if exist "C:\Program Files\Microsoft Visual Studio\2022\BuildTools\MSBuild\Current\Bin\MSBuild.exe" (
-            echo "MSBuild.exe found"
-          ) else (
-            echo "MSBuild.exe not found"
-            exit /b 1
-          )
-
-      - name: Restore NuGet packages
-        run: dotnet restore
-
-      - name: Build solution
-        shell: cmd
-        run: |
-          "C:\Program Files\Microsoft Visual Studio\2022\BuildTools\MSBuild\Current\Bin\MSBuild.exe" "${{ github.workspace }}\CareSphere.sln" /p:Configuration=Release
+      - name: Build with dotnet
+        run: dotnet build --configuration Release
 
       - name: dotnet publish
-        run: dotnet publish -c Release -o myapp
+        run: dotnet publish -c Release -o "${{env.DOTNET_ROOT}}/myapp"
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: .net-app
-          path: myapp
+          path: ${{env.DOTNET_ROOT}}/myapp
 
   deploy:
     runs-on: windows-latest
@@ -67,4 +53,4 @@ jobs:
           app-name: 'caresphere'
           slot-name: 'Production'
           package: .
-          publish-profile: ${{ secrets.AzureAppService_PublishProfile_a8b0bec9cfc9465892818a488e41e04a }}
+          publish-profile: ${{ secrets.AzureAppService_PublishProfile_f3eca713b38f432c9e710434de0ef056 }}
