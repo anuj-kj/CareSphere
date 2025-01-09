@@ -122,5 +122,7 @@ catch (Exception ex)
 {
     var logger = builder.Services.BuildServiceProvider().GetRequiredService<ILogger<Program>>();
     logger.LogError(ex, "An error occurred during application startup.");
+    Console.WriteLine($"An error occurred during application startup: {ex.Message}");
+    Console.WriteLine(ex.StackTrace);
     throw;
 }
