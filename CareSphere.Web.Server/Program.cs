@@ -13,8 +13,22 @@ using Microsoft.Extensions.Hosting;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// Load configuration settings based on the environment
+if (builder.Environment.IsDevelopment())
+{
+    builder.Configuration
+        .SetBasePath(Directory.GetCurrentDirectory())
+        .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+        .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true)
+        .AddEnvironmentVariables();
+}
+else
+{
+    builder.Configuration
+        .AddEnvironmentVariables();
+}
 
+// Add services to the container.
 builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();

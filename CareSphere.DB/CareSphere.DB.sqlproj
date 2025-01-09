@@ -66,5 +66,7 @@
     <Build Include="Tables\Appointment.sql" />
     <Build Include="Tables\User.sql" />
     <Build Include="Tables\PatientOrganization.sql" />
+    <Build Include="Tables\OrderItems.sql" />
+    <Build Include="Tables\Orders.sql" />
   </ItemGroup>
 </Project>
