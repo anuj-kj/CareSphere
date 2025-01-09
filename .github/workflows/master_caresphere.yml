@@ -18,10 +18,6 @@ jobs:
         with:
           dotnet-version: '9.x'
 
-      - name: Install .NET SDK
-        run: |
-          curl -sSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin --channel 9.0
-
       - name: Install Visual Studio Build Tools
         run: choco install visualstudio2022buildtools --package-parameters "--add Microsoft.VisualStudio.Workload.DataTools --includeRecommended --includeOptional"
 
