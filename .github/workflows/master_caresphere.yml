@@ -21,6 +21,9 @@ jobs:
         with:
           dotnet-version: '9.x'
 
+      - name: Restore NuGet packages
+        run: dotnet restore CareSphere.Web.Server/CareSphere.Web.Server.csproj
+
       - name: Build with dotnet
         run: dotnet build CareSphere.Web.Server/CareSphere.Web.Server.csproj --configuration Release
 
