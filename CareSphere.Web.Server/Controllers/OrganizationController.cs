@@ -17,7 +17,7 @@ namespace CareSphere.Web.Server.Controllers
         {
             OrganizationService = organizationService;
         }
-        [Authorize]
+        //[Authorize]
         [HttpGet("all")]
         /// <summary>
         ///  Returns all the organizations

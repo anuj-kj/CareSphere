@@ -19,20 +19,18 @@ builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 
 // Load configuration settings based on the environment
-//if (builder.Environment.IsDevelopment())
-//{
-//    builder.Configuration
-//        .SetBasePath(Directory.GetCurrentDirectory())
-//        .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-//        .AddEnvironmentVariables();
-//}
-//else
-//{
-//    builder.Configuration
-//        .AddEnvironmentVariables();
-//}
-builder.Configuration
-      .AddEnvironmentVariables();
+if (builder.Environment.IsDevelopment())
+{
+    builder.Configuration
+        .SetBasePath(Directory.GetCurrentDirectory())
+        .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+        .AddEnvironmentVariables();
+}
+else
+{
+    builder.Configuration
+        .AddEnvironmentVariables();
+}
 
 // Add services to the container.
 builder.Services.AddControllers();
@@ -50,6 +48,13 @@ builder.Services.AddCors(options =>
                    .AllowAnyHeader();
         });
 });
+
+// Register IDomainEventPublisher
+builder.Services.AddSingleton<IDomainEventPublisher, DomainEventPublisher>();
+
+// Register OrderEventHandlers
+builder.Services.AddScoped<OrderEventHandlers>();
+
 // Configure JWT authentication
 builder.Services.AddAuthentication(options =>
 {
@@ -94,12 +99,17 @@ try
 {
     var app = builder.Build();
 
-    // Register event handlers with the DomainEventPublisher
-    var domainEventPublisher = app.Services.GetRequiredService<IDomainEventPublisher>();
-    var orderEventHandlers = app.Services.GetRequiredService<OrderEventHandlers>();
+    // Create a scope to resolve scoped services
+    using (var scope = app.Services.CreateScope())
+    {
+        var scopedServices = scope.ServiceProvider;
+        var domainEventPublisher = scopedServices.GetRequiredService<IDomainEventPublisher>();
+        var orderEventHandlers = scopedServices.GetRequiredService<OrderEventHandlers>();
 
-    domainEventPublisher.RegisterHandler<OrderStatusChangedEvent>(orderEventHandlers.HandleOrderStatusChanged);
-    domainEventPublisher.RegisterHandler<OrderItemAddedEvent>(orderEventHandlers.HandleOrderItemAdded);
+        // Register event handlers with the DomainEventPublisher
+        domainEventPublisher.RegisterHandler<OrderStatusChangedEvent>(orderEventHandlers.HandleOrderStatusChanged);
+        domainEventPublisher.RegisterHandler<OrderItemAddedEvent>(orderEventHandlers.HandleOrderItemAdded);
+    }
 
     // Configure the HTTP request pipeline.
     if (app.Environment.IsDevelopment())
@@ -128,3 +138,4 @@ catch (Exception ex)
     Console.WriteLine(ex.StackTrace);
     throw;
 }
+
