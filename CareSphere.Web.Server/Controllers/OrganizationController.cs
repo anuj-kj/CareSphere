@@ -33,7 +33,7 @@ namespace CareSphere.Web.Server.Controllers
             catch (Exception ex)
             {
                 //Log the error i.e., ex.Message
-                return NotFound("Organizations not found");
+                return NotFound($"Organizations not found {ex.Message}");
             }
         }
     }
