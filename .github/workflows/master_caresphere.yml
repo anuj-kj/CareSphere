@@ -21,6 +21,9 @@ jobs:
         with:
           dotnet-version: '9.x'
 
+      - name: List directory contents
+        run: dir
+
       - name: Build with dotnet
         run: dotnet build CareSphere.Web.Application/CareSphere.Web.Application.csproj --configuration Release
 
