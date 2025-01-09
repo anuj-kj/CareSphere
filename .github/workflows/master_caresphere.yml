@@ -27,7 +27,12 @@ jobs:
       - name: Build solution
         shell: cmd
         run: |
-          "C:\Program Files\Microsoft Visual Studio\2022\BuildTools\MSBuild\Current\Bin\MSBuild.exe" "${{ github.workspace }}\CareSphere.sln" /p:Configuration=Release
+          if exist "C:\Program Files\Microsoft Visual Studio\2022\BuildTools\MSBuild\Current\Bin\MSBuild.exe" (
+            "C:\Program Files\Microsoft Visual Studio\2022\BuildTools\MSBuild\Current\Bin\MSBuild.exe" "${{ github.workspace }}\CareSphere.sln" /p:Configuration=Release
+          ) else (
+            echo "MSBuild.exe not found"
+            exit /b 1
+          )
 
       - name: dotnet publish
         run: dotnet publish -c Release -o myapp
