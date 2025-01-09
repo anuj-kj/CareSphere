@@ -20,10 +20,8 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '9.x'
-      - name: Install SSDT
-        run: |
-          choco install sql-server-data-tools --version=17.0.62203.01040
-
+      - name: Install Visual Studio Build Tools
+        run: choco install visualstudio2022buildtools --package-parameters "--add Microsoft.VisualStudio.Workload.DataTools --includeRecommended --includeOptional"
       - name: Restore NuGet packages
         run: dotnet restore
 
