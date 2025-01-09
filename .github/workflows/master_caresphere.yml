@@ -20,15 +20,9 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '9.x'
-      - name: Install Visual Studio Build Tools
-        run: choco install visualstudio2022buildtools --package-parameters "--add Microsoft.VisualStudio.Workload.DataTools --includeRecommended --includeOptional"
-      - name: Restore NuGet packages
-        run: dotnet restore
 
-      - name: Build solution
-        run: |
-        # Use MSBuild to build the solution
-        "C:/Program Files/Microsoft Visual Studio/2022/BuildTools/MSBuild/Current/Bin/MSBuild.exe" CareSphere.sln /p:Configuration=Release
+      - name: Build with dotnet
+        run: dotnet build --configuration Release
 
       - name: dotnet publish
         run: dotnet publish -c Release -o "${{env.DOTNET_ROOT}}/myapp"
@@ -59,4 +53,4 @@ jobs:
           app-name: 'caresphere'
           slot-name: 'Production'
           package: .
-          publish-profile: ${{ secrets.AzureAppService_PublishProfile_a8b0bec9cfc9465892818a488e41e04a }}
+          publish-profile: ${{ secrets.AzureAppService_PublishProfile_f3eca713b38f432c9e710434de0ef056 }}
