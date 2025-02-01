@@ -14,5 +14,6 @@ namespace CareSphere.Services.Orders.Interfaces
         Task<Order> GetOrderAsync(Guid orderId);
         Task UpdateOrderStatusAsync(Guid orderId, OrderStatus status);
         Task DeleteOrderAsync(Guid orderId);
+         Task<List<Order>> GetOrdersAsync();
     }
 }

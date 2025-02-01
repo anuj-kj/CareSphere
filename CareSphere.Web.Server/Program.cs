@@ -11,6 +11,7 @@ using CareSphere.Domains.Orders;
 using CareSphere.Services.Orders.Events.Handlers;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using CareSphere.Web.Server.Configs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -31,7 +32,8 @@ else
     builder.Configuration
         .AddEnvironmentVariables();
 }
-
+// Configure Logging (Serilog)
+SerilogConfiguration.ConfigureSerilog(builder);
 // Add services to the container.
 builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi

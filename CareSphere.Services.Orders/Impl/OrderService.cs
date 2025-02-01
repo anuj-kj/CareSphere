@@ -55,6 +55,11 @@ namespace CareSphere.Services.Orders.Impl
         {
             return await _orderRepository.GetByGuidIdAsync(orderId);
         }
+        public async Task<List<Order>> GetOrdersAsync()
+        {
+            var orers= await _orderRepository.GetAllAsync();
+            return orers.ToList();
+        }
 
         public async Task UpdateOrderStatusAsync(Guid orderId, OrderStatus status)
         {
