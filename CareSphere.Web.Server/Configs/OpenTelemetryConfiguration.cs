@@ -5,7 +5,6 @@ using OpenTelemetry.Metrics;
 using Microsoft.Extensions.DependencyInjection;
 using Azure.Monitor.OpenTelemetry.Exporter;
 using System.Diagnostics;
-using OpenTelemetry;
 
 namespace CareSphere.Web.Server.Configs
 {
@@ -18,21 +17,21 @@ namespace CareSphere.Web.Server.Configs
 
             if (isTracingEnabled && !string.IsNullOrEmpty(connectionString))
             {
-                var activitySource = new ActivitySource("CareSphereAPI");
+                // ✅ Register Activity Listener for Custom Tags
+                RegisterActivityListener();
 
                 builder.Services.AddOpenTelemetry()
                     .ConfigureResource(resource => resource.AddService("CareSphereAPI"))
                     .WithTracing(tracerProviderBuilder =>
                     {
                         tracerProviderBuilder
-                            .AddSource("CareSphereAPI") // ✅ Add custom activity source
+                            .AddSource("CareSphereAPI") // ✅ Custom activity source
                             .AddAspNetCoreInstrumentation()
                             .AddHttpClientInstrumentation()
                             .AddEntityFrameworkCoreInstrumentation(options =>
                             {
                                 options.SetDbStatementForText = true;  // ✅ Capture SQL queries
                             })
-                            .AddProcessor(new CustomActivityProcessor()) // ✅ Custom Processor to Add Duration
                             .SetSampler(new TraceIdRatioBasedSampler(0.1)) // ✅ Sample 10% of traces
                             .AddAzureMonitorTraceExporter(options =>
                             {
@@ -51,18 +50,25 @@ namespace CareSphere.Web.Server.Configs
                     });
             }
         }
-    }
 
-    // ✅ Custom Processor to Add Slow Request Tag
-    public class CustomActivityProcessor : BaseProcessor<Activity>
-    {
-        public override void OnEnd(Activity activity)
+        // ✅ Custom Activity Listener to Add http.slow_request Tag
+        private static void RegisterActivityListener()
         {
-            if (activity.Duration.TotalMilliseconds > 2000) // ✅ Requests >2s
+            var listener = new ActivityListener
             {
-                activity.SetTag("http.slow_request", true);
-                activity.AddEvent(new ActivityEvent("Slow API Request Detected"));
-            }
+                ShouldListenTo = source => true,
+                Sample = (ref ActivityCreationOptions<ActivityContext> options) => ActivitySamplingResult.AllData,
+                ActivityStopped = activity =>
+                {
+                    if (activity.Duration.TotalMilliseconds > 2000) // ✅ Requests >2s
+                    {
+                        activity.SetTag("http.slow_request", true);
+                        activity.AddEvent(new ActivityEvent("Slow API Request Detected"));
+                    }
+                }
+            };
+
+            ActivitySource.AddActivityListener(listener);
         }
     }
 }
