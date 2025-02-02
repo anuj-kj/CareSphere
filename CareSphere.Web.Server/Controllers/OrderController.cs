@@ -51,5 +51,19 @@ namespace CareSphere.Web.Server.Controllers
                 return NotFound("Error during getting order");
             }
         }
+        [HttpGet("delay")]
+        public async Task<IActionResult> Delay()
+        {
+            try
+            {
+                await Task.Delay(10000);
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error during delay");
+                return NotFound("Error during delay");
+            }
+        }
     }
 }

@@ -34,6 +34,8 @@ else
 }
 // Configure Logging (Serilog)
 SerilogConfiguration.ConfigureSerilog(builder);
+// Configure OpenTelemetry Tracing
+OpenTelemetryConfiguration.ConfigureOpenTelemetry(builder);
 // Add services to the container.
 builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
