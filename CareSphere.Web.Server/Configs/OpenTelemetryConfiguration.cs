@@ -31,6 +31,16 @@ namespace CareSphere.Web.Server.Configs
                             .AddEntityFrameworkCoreInstrumentation(options =>
                             {
                                 options.SetDbStatementForText = true;  // ✅ Capture SQL queries
+                                options.EnrichWithIDbCommand = (activity, command) =>
+                                {
+                                    var durationMs = activity.Duration.TotalMilliseconds;
+                                    if (durationMs > 1000) // ✅ Log only if SQL query takes longer than 1s
+                                    {
+                                        activity.SetTag("sql.slow_query", true);
+                                        activity.SetTag("sql.query_text", command.CommandText);
+                                        activity.SetTag("sql.duration_ms", durationMs);
+                                    }
+                                };
                             })
                             .SetSampler(new TraceIdRatioBasedSampler(0.1)) // ✅ Sample 10% of traces
                             .AddAzureMonitorTraceExporter(options =>
