@@ -21,6 +21,12 @@ namespace CareSphere.Domains.Orders
             Status = OrderStatus.Created;
         }
 
+        public Order(Guid id, OrderStatus status)
+        {
+            Id = id;
+            Status1 = status;
+        }
+
         public void AddItem(Guid orderId, Guid productId, int quantity, decimal price)
         {
             var item = new OrderItem(orderId, productId, quantity, price);
@@ -48,6 +54,8 @@ namespace CareSphere.Domains.Orders
         }
 
         public IReadOnlyCollection<IDomainEvent> DomainEvents => _domainEvents.AsReadOnly();
+
+        public OrderStatus Status1 { get; }
 
         public void ClearDomainEvents()
         {

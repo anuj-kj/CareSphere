@@ -13,10 +13,17 @@ namespace CareSphere.Domains.Orders
         public Guid ProductId { get; private set; }
         public int Quantity { get; private set; }
         public decimal Price { get; private set; }
-
-        public OrderItem(Guid orderId, Guid productId, int quantity, decimal price)
+        public OrderItem( Guid orderId, Guid productId, int quantity, decimal price)
         {
             Id = Guid.NewGuid();
+            OrderId = orderId;
+            ProductId = productId;
+            Quantity = quantity;
+            Price = price;
+        }
+        public OrderItem(Guid id, Guid orderId, Guid productId, int quantity, decimal price)
+        {
+            Id = id;
             OrderId = orderId;
             ProductId = productId;
             Quantity = quantity;

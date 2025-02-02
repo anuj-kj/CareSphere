@@ -12,6 +12,7 @@ using CareSphere.Services.Orders.Events.Handlers;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using CareSphere.Web.Server.Configs;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -40,7 +41,11 @@ OpenTelemetryConfiguration.ConfigureOpenTelemetry(builder);
 builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
-builder.Services.AddDataLayer(builder.Configuration.GetConnectionString("DefaultConnection"));
+builder.Services.AddDataLayer(options =>
+{
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
+});
+//builder.Services.AddDataLayer(builder.Configuration.GetConnectionString("DefaultConnection"));
 builder.Services.AddServiceLayer();
 builder.Services.AddCors(options =>
 {

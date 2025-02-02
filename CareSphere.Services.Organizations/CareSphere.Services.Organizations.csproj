@@ -7,6 +7,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\CareSphere.Data.Core\CareSphere.Data.Core.csproj" />
     <ProjectReference Include="..\CareSphere.Data.Organaizations\CareSphere.Data.Organaizations.csproj" />
   </ItemGroup>

@@ -8,5 +8,5 @@
     WorkingHoursEnd TIME NULL,
     OrganizationId INT NOT NULL,
     CreatedAt DATETIME DEFAULT GETDATE() NOT NULL,
-    CONSTRAINT FK_Staff_Organization FOREIGN KEY (OrganizationId) REFERENCES Organization(OrganizationId) ON DELETE CASCADE
+    CONSTRAINT FK_Staff_Organization FOREIGN KEY (OrganizationId) REFERENCES Organization(OrganizationId)
 );

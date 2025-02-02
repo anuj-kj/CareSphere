@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using CareSphere.Data.Configurations;
 using CareSphere.Services.Configurations;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using NUnit.Framework;
@@ -37,8 +38,16 @@ namespace CareSphere.Services.Tests
         {
             // Register application dependencies
             services.AddSingleton<IConfiguration>(Configuration);
-            services.AddDataLayer(Configuration.GetConnectionString("DefaultConnection"));
-            services.AddServiceLayer();
+
+            var databaseProvider = Configuration["DatabaseProvider"];
+            if (databaseProvider == "SQLite")
+            {
+                services.AddDataLayer(options => options.UseSqlite(Configuration.GetConnectionString("SQLiteConnection")));
+            }
+            else
+            {
+                services.AddDataLayer(options => options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
+            }
         }
     }
 }

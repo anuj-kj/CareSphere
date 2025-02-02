@@ -11,15 +11,14 @@ namespace CareSphere.Data.Configurations
 {
     public static class DataLayerExtensions
     {
-        public static IServiceCollection AddDataLayer(this IServiceCollection services, string? connectionString)
+        public static IServiceCollection AddDataLayer(this IServiceCollection services, Action<DbContextOptionsBuilder> configureDbContext)
         {
-            // Add CareSphereDbContext
-            services.AddDbContext<CareSphereDbContext>(options =>
-                options.UseSqlServer(connectionString));
+            // Add CareSphereDbContext with the provided configuration
+            services.AddDbContext<CareSphereDbContext>(configureDbContext);
 
-            // Add OrderDbContext
-            services.AddDbContext<OrderDbContext>(options =>
-                options.UseSqlServer(connectionString));
+            // Add OrderDbContext with the provided configuration
+            services.AddDbContext<OrderDbContext>(configureDbContext);
+
             // Register UnitOfWork for CareSphereDbContext
             services.AddScoped<IUnitOfWork, UnitOfWork<CareSphereDbContext>>();
 
@@ -29,10 +28,6 @@ namespace CareSphere.Data.Configurations
             services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
             services.AddScoped<IOrganizationRepository, OrganizationRepository>();
             services.AddScoped<IOrderRepository, OrderRepository>();
-            services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
-            services.AddScoped<IOrganizationRepository, OrganizationRepository>();
-            services.AddScoped<IOrderRepository, OrderRepository>();
-           
 
             return services;
         }

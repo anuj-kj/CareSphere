@@ -12,6 +12,7 @@ using NUnit.Framework;
 
 namespace CareSphere.Data.Tests.OrganizationTests
 {
+    [TestFixture]
     public class OrganizationTests : TestBase
     {
         private IOrganizationRepository _organizationRepository;
