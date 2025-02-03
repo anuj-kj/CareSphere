@@ -21,14 +21,19 @@ jobs:
       - name: Restore NuGet packages
         run: dotnet restore
 
-      - name: Build only C# projects (ignore .sqlproj)
+      - name: Build all projects (excluding `.sqlproj`)
         run: |
           echo "Finding all .csproj files..."
           Get-ChildItem -Path . -Recurse -Filter *.csproj | ForEach-Object { dotnet build $_.FullName --configuration Release }
 
+      - name: Build Test Projects (Ensures DLLs exist)
+        run: |
+          echo "Building test projects..."
+          Get-ChildItem -Path . -Recurse -Filter *Tests.csproj | ForEach-Object { dotnet build $_.FullName --configuration Debug }
+
       - name: Run Tests (Using In-Memory Database)
         run: |
-          echo "Finding all test .csproj files..."
+          echo "Running tests..."
           Get-ChildItem -Path . -Recurse -Filter *Tests.csproj | ForEach-Object { dotnet test $_.FullName --no-build --verbosity normal }
 
       - name: dotnet publish
