@@ -21,8 +21,16 @@ jobs:
       - name: Restore NuGet packages
         run: dotnet restore CareSphere.Web.Server/CareSphere.Web.Server.csproj
 
-      - name: Build Solution (including CareSphere.DB)
+      - name: Build Web Solution
         run: dotnet build --configuration Release
+
+      - name: Install Visual Studio Build Tools (for SSDT)
+        run: |
+          choco install visualstudio2022buildtools --package-parameters "--add Microsoft.VisualStudio.Workload.ManagedDesktopBuildTools --add Microsoft.VisualStudio.Component.SQL.SSDT"
+
+      - name: Build Database Project (CareSphere.DB)
+        run: |
+          "C:\Program Files\Microsoft Visual Studio\2022\BuildTools\MSBuild\Current\Bin\MSBuild.exe" CareSphere.DB/CareSphere.DB.sqlproj /p:Configuration=Release
 
       - name: Publish Web App
         run: dotnet publish CareSphere.Web.Server/CareSphere.Web.Server.csproj -c Release -o "${{env.DOTNET_ROOT}}/myapp"
@@ -57,8 +65,10 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore
 
-      - name: Build Database Project (CareSphere.DB)
-        run: dotnet build CareSphere.DB/CareSphere.DB.sqlproj --configuration Release
+      - name: Deploy Database Schema from DACPAC
+        run: |
+          sqlpackage /Action:Publish /SourceFile:"CareSphere.DB/bin/Debug/CareSphere.DB.dacpac" \
+          /TargetServerName:"(localdb)\\mssqllocaldb" /TargetDatabaseName:"TestDb"
 
       - name: Run All Unit Tests
         env:
