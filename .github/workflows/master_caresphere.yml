@@ -19,13 +19,13 @@ jobs:
           dotnet-version: '9.x'
 
       - name: Restore NuGet packages
-        run: dotnet restore CareSphere.Web.Server/CareSphere.Web.Server.csproj
+        run: dotnet restore
 
       - name: Build with dotnet
-        run: dotnet build CareSphere.Web.Server/CareSphere.Web.Server.csproj --configuration Release
+        run: dotnet build --configuration Release
 
       - name: Run Tests (Using In-Memory Database)
-        run: dotnet test CareSphere.Tests/CareSphere.Tests.csproj --no-build --verbosity normal
+        run: dotnet test --no-build --verbosity normal
 
       - name: dotnet publish
         run: dotnet publish CareSphere.Web.Server/CareSphere.Web.Server.csproj -c Release -o "${{env.DOTNET_ROOT}}/myapp"
