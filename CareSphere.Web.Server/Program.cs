@@ -1,5 +1,4 @@
-using Microsoft.Extensions.Configuration;
-using CareSphere.Data.Configurations;
+
 using CareSphere.Services.Configurations;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -13,6 +12,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using CareSphere.Web.Server.Configs;
 using Microsoft.EntityFrameworkCore;
+using CareSphere.Data.Configurations;
 
 var builder = WebApplication.CreateBuilder(args);
 

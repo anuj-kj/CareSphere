@@ -6,23 +6,30 @@ using CareSphere.Data.Organaizations.Impl;
 using CareSphere.Data.Organaizations.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using System;
 
 namespace CareSphere.Data.Configurations
 {
     public static class DataLayerExtensions
     {
-        public static IServiceCollection AddDataLayer(this IServiceCollection services, Action<DbContextOptionsBuilder> configureDbContext)
+        public static IServiceCollection AddDataLayer(this IServiceCollection services, Action<DbContextOptionsBuilder> configureDbContext = null)
         {
-            // Add CareSphereDbContext with the provided configuration
-            services.AddDbContext<CareSphereDbContext>(configureDbContext);
+            if (configureDbContext != null)
+            {
+                // ✅ Add CareSphereDbContext & OrderDbContext with provided configuration (SQL Server, InMemory, etc.)
+                services.AddDbContext<CareSphereDbContext>(configureDbContext);
+                services.AddDbContext<OrderDbContext>(configureDbContext);
+            }
+            else
+            {
+                // ✅ Ensure that DbContexts are registered, but do not override existing ones (Mock Support)
+                services.TryAddScoped<CareSphereDbContext>();
+                services.TryAddScoped<OrderDbContext>();
+            }
 
-            // Add OrderDbContext with the provided configuration
-            services.AddDbContext<OrderDbContext>(configureDbContext);
-
-            // Register UnitOfWork for CareSphereDbContext
+            // ✅ Always register UnitOfWork and repositories (needed for DI)
             services.AddScoped<IUnitOfWork, UnitOfWork<CareSphereDbContext>>();
-
-            // Register UnitOfWork for OrderDbContext
             services.AddScoped<IUnitOfWork, UnitOfWork<OrderDbContext>>();
 
             services.AddScoped(typeof(IRepository<>), typeof(Repository<>));

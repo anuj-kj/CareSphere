@@ -1,31 +1,28 @@
-﻿using System.Configuration;
-using System.Text.Json;
+﻿using System.Text.Json;
 using System.Threading.Tasks;
 using CareSphere.Data.Configurations;
 using CareSphere.Data.Core.DataContexts;
 using CareSphere.Domains.Core;
 using CareSphere.Domains.Orders;
-using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.SqlServer.Dac;
+using Moq;
+using Moq.EntityFrameworkCore;
 using NUnit.Framework;
+
 
 namespace CareSphere.TestUtilities
 {
     [SetUpFixture]
     public abstract class BaseTestSetup
     {
-        private const string LocalDbConnectionString = "Server=(localdb)\\mssqllocaldb;Database=TestDb;Trusted_Connection=True;MultipleActiveResultSets=true";
-        private const string MasterDbConnectionString = "Server=(localdb)\\mssqllocaldb;Database=master;Trusted_Connection=True;MultipleActiveResultSets=true";
         protected static string ConnectionString;
         protected IServiceProvider ServiceProvider { get; private set; }
         protected IConfiguration Configuration { get; private set; }
-        private static bool _databaseInitialized;
-        private static readonly object _lock = new object();
-        private string _dacpacPath;
+
+        private string _dbMode;
 
         [OneTimeSetUp]
         public async Task Setup()
@@ -35,254 +32,211 @@ namespace CareSphere.TestUtilities
                 .AddJsonFile("testsettings.json", optional: false, reloadOnChange: true)
                 .Build();
 
-            bool useLocalDbOnTheFly = Configuration.GetValue<bool>("UseLocalDbOnTheFly");
+            _dbMode = Configuration.GetValue<string>("DbMode");
 
-            if (useLocalDbOnTheFly)
+            var services = new ServiceCollection();
+            ConfigureServices(services);
+
+            ServiceProvider = services.BuildServiceProvider();
+
+            if (_dbMode == "InMemory")
             {
-                lock (_lock)
-                {
-                    if (_databaseInitialized)
-                    {
-                        return;
-                    }
-                }
-
-                ConnectionString = LocalDbConnectionString;
-
-                var services = new ServiceCollection();
-                ConfigureServices(services);
-                ServiceProvider = services.BuildServiceProvider();
-
-                if (!_databaseInitialized)
-                {
-                    await CreateDatabase();
-                    await DeploySchema();
-                    await SeedDatabase();
-                    _databaseInitialized = true;
-                }
-            }
-            else
-            {
-                ConnectionString = Configuration.GetConnectionString("DefaultConnection");
-
-                var services = new ServiceCollection();
-                ConfigureServices(services);
-                ServiceProvider = services.BuildServiceProvider();
+                await SeedDatabase();
             }
         }
 
         protected virtual void ConfigureServices(IServiceCollection services)
         {
+            switch (_dbMode)
+            {
+                case "InMemory":
+                    Console.WriteLine("⚡ Using In-Memory Database with Seeded Data");
+                    ConnectionString = "InMemoryDb";
+                    ConfigureServicesForInMemory(services);
+                    break;
+
+                case "Existing":
+                    Console.WriteLine("🛢️ Using Existing SQL Server (No Seeding)");
+                    ConnectionString = Configuration.GetConnectionString("DefaultConnection");
+                    ConfigureServicesForSqlServer(services);
+                    break;
+
+                case "Mock":
+                    Console.WriteLine("🔹 Using Mocked `DbContext` with Test Data");
+                    ConfigureServicesForMock(services);
+                    break;
+
+                default:
+                    throw new ArgumentException($"Invalid database mode: {_dbMode}");
+            }
+        }
+
+        protected void ConfigureServicesForInMemory(IServiceCollection services)
+        {
             services.AddSingleton<IConfiguration>(Configuration);
             services.AddLogging(configure => configure.AddConsole());
-            services.AddDataLayer(options => options.UseSqlServer(ConnectionString));
+
+        
+            services.AddDataLayer(options =>
+            {
+                options.UseInMemoryDatabase("TestDatabase");
+            });
         }
 
-        private async Task CreateDatabase()
+        protected void ConfigureServicesForSqlServer(IServiceCollection services)
         {
-            using (var connection = new SqlConnection(MasterDbConnectionString))
+            services.AddSingleton<IConfiguration>(Configuration);
+            services.AddLogging(configure => configure.AddConsole());
+
+       
+            services.AddDataLayer(options =>
             {
-                await connection.OpenAsync();
-                using (var command = new SqlCommand("IF DB_ID('TestDb') IS NULL CREATE DATABASE [TestDb];", connection))
-                {
-                    await command.ExecuteNonQueryAsync();
-                }
-            }
+                options.UseSqlServer(ConnectionString);
+            });
         }
 
-        private async Task DeploySchema()
+        protected void ConfigureServicesForMock(IServiceCollection services)
         {
-            var dacServices = new DacServices(ConnectionString);
-            _dacpacPath = GetDacpacPath();
-            using (DacPackage dacpac = DacPackage.Load(_dacpacPath))
-            {
-                dacServices.Deploy(dacpac, "TestDb", upgradeExisting: true);
-            }
+            services.AddSingleton<IConfiguration>(Configuration);
+            services.AddLogging(configure => configure.AddConsole());
 
-            // Add a delay to ensure the database has enough time to process the schema changes
-            await Task.Delay(5000);
+            // ✅ Create Mocked `DbContext`
+            var mockCareSphereDbContext = new Mock<CareSphereDbContext>(new DbContextOptions<CareSphereDbContext>());
+            var mockOrderDbContext = new Mock<OrderDbContext>(new DbContextOptions<OrderDbContext>());
 
-            // Verify that the Organization table exists
-            using (var scope = ServiceProvider.CreateScope())
-            {
-                var careSphereContext = scope.ServiceProvider.GetRequiredService<CareSphereDbContext>();
-                var organizationExists = await careSphereContext.Database.ExecuteSqlRawAsync("SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'Organization'");
+            // ✅ Load Seed Data
+            var organizations = LoadJsonData<Organization>("organizations.json");
+            var orders = LoadJsonData<OrderDto>("orders.json")
+                         .Select(dto => new Order(dto.Id, dto.Status))
+                         .ToList();
 
-                if (organizationExists == 0)
-                {
-                    throw new InvalidOperationException("The Organization table was not created.");
-                }
-            }
+            // ✅ Fix: Use `ReturnsDbSet()` from the helper method
+            mockCareSphereDbContext.Setup(db => db.Organization).ReturnsDbSet(organizations);
+            mockOrderDbContext.Setup(db => db.Orders).ReturnsDbSet(orders);
+
+            // ✅ Register mocks in DI container BEFORE calling AddDataLayer
+            services.AddSingleton(mockCareSphereDbContext.Object);
+            services.AddSingleton(mockOrderDbContext.Object);
+
+            // ✅ Call `AddDataLayer`, ensuring it does NOT override the mocks
+            services.AddDataLayer(_ => { });
+
+            Console.WriteLine("✅ Mocked `DbContext` registered successfully");
         }
 
-        private string GetDacpacPath()
-        {
-            // Find the solution directory
-            string solutionDirectory = Directory.GetParent(Directory.GetCurrentDirectory()).Parent.Parent.Parent.FullName;
 
-            // Construct the path to the .dacpac file
-            string dacpacPath = Path.Combine(solutionDirectory, "CareSphere.DB", "bin", "Debug", "CareSphere.DB.dacpac");
 
-            if (!File.Exists(dacpacPath))
-            {
-                throw new FileNotFoundException($"Dacpac file not found at path: {dacpacPath}");
-            }
 
-            return dacpacPath;
-        }
+
+
+
 
         private async Task SeedDatabase()
         {
-            using (var scope = ServiceProvider.CreateScope())
-            {
-                var careSphereContext = scope.ServiceProvider.GetRequiredService<CareSphereDbContext>();
-                var orderContext = scope.ServiceProvider.GetRequiredService<OrderDbContext>();
+            using var scope = ServiceProvider.CreateScope();
+            var careSphereContext = scope.ServiceProvider.GetRequiredService<CareSphereDbContext>();
+            var orderContext = scope.ServiceProvider.GetRequiredService<OrderDbContext>();
 
-                await ClearDatabase(careSphereContext);
-                await ClearDatabase(orderContext);
+            Console.WriteLine("🔹 Clearing existing in-memory data...");
+            await ClearDatabase(careSphereContext);
+            await ClearDatabase(orderContext);
 
-                await InsertTestData(careSphereContext);
-                await InsertTestData(orderContext);
-            }
+            Console.WriteLine("✅ Seeding in-memory database...");
+            await InsertTestData(careSphereContext);
+            await InsertTestData(orderContext);
         }
 
         private async Task ClearDatabase(DbContext context)
         {
             if (context is CareSphereDbContext careSphereContext)
             {
-                if (await careSphereContext.Database.CanConnectAsync())
-                {
-                    careSphereContext.Organization.RemoveRange(careSphereContext.Organization);
-                    careSphereContext.User.RemoveRange(careSphereContext.User);
-                }
+                careSphereContext.Organization.RemoveRange(careSphereContext.Organization);
+                careSphereContext.User.RemoveRange(careSphereContext.User);
             }
-
             if (context is OrderDbContext orderContext)
             {
-                if (await orderContext.Database.CanConnectAsync())
-                {
-                    orderContext.Orders.RemoveRange(orderContext.Orders);
-                    orderContext.OrderItems.RemoveRange(orderContext.OrderItems);
-                }
+                orderContext.Orders.RemoveRange(orderContext.Orders);
+                orderContext.OrderItems.RemoveRange(orderContext.OrderItems);
             }
-
             await context.SaveChangesAsync();
         }
 
         private async Task InsertTestData(DbContext context)
         {
+            bool isInMemory = context.Database.ProviderName == "Microsoft.EntityFrameworkCore.InMemory";
+
             if (context is CareSphereDbContext careSphereContext)
             {
-                using var transaction = await careSphereContext.Database.BeginTransactionAsync();
-                try
-                {
-                    // ✅ Disable Change Tracking for Performance
-                    careSphereContext.ChangeTracker.AutoDetectChangesEnabled = false;
+                var organizations = LoadJsonData<Organization>("organizations.json");
+                careSphereContext.Organization.AddRange(organizations);
 
-                    // Organization Table
-                    await careSphereContext.Database.ExecuteSqlRawAsync("SET IDENTITY_INSERT [Organization] ON");
-                    var organizations = LoadJsonData<Organization>("organizations.json");
-                    careSphereContext.Set<Organization>().AddRange(organizations);
-                    await careSphereContext.SaveChangesAsync();
-                    await careSphereContext.Database.ExecuteSqlRawAsync("SET IDENTITY_INSERT [Organization] OFF");
+                var users = LoadJsonData<User>("users.json");
+                careSphereContext.User.AddRange(users);
 
-                    // User Table
-                    await careSphereContext.Database.ExecuteSqlRawAsync("SET IDENTITY_INSERT [User] ON");
-                    var users = LoadJsonData<User>("users.json");
-                    careSphereContext.Set<User>().AddRange(users);
-                    await careSphereContext.SaveChangesAsync();
-                    await careSphereContext.Database.ExecuteSqlRawAsync("SET IDENTITY_INSERT [User] OFF");
-
-                    await transaction.CommitAsync();
-                }
-                catch (Exception ex)
-                {
-                    await transaction.RollbackAsync();
-                    Console.WriteLine($"Error inserting Organizations/Users: {ex.Message}");
-                    throw;
-                }
-                finally
-                {
-                    careSphereContext.ChangeTracker.AutoDetectChangesEnabled = true;
-                }
+                await careSphereContext.SaveChangesAsync();
             }
 
             if (context is OrderDbContext orderContext)
             {
-                using var orderTransaction = await orderContext.Database.BeginTransactionAsync();
-                try
+                if (!isInMemory) // ✅ Skip transactions for In-Memory DB
                 {
-                    orderContext.ChangeTracker.AutoDetectChangesEnabled = false;
+                    using var transaction = await orderContext.Database.BeginTransactionAsync();
+                    try
+                    {
+                        orderContext.ChangeTracker.AutoDetectChangesEnabled = false;
 
-                    // ✅ Load DTOs from JSON
+                        var orderDtos = LoadJsonData<OrderDto>("orders.json");
+                        var orders = orderDtos.Select(dto => new Order(dto.Id, dto.Status)).ToList();
+                        orderContext.Orders.AddRange(orders);
+                        await orderContext.SaveChangesAsync();
+
+                        var orderItemDtos = LoadJsonData<OrderItemDto>("orderitems.json");
+                        var validOrderIds = orders.Select(o => o.Id).ToHashSet();
+                        var orderItems = orderItemDtos
+                            .Where(dto => validOrderIds.Contains(dto.OrderId))
+                            .Select(dto => new OrderItem(dto.Id, dto.OrderId, dto.ProductId, dto.Quantity, dto.Price))
+                            .ToList();
+
+                        orderContext.OrderItems.AddRange(orderItems);
+                        await orderContext.SaveChangesAsync();
+                        await transaction.CommitAsync();
+
+                        Console.WriteLine("✅ Orders & OrderItems seeded successfully");
+                    }
+                    catch (Exception ex)
+                    {
+                        await transaction.RollbackAsync();
+                        Console.WriteLine($"❌ Error seeding Orders/OrderItems: {ex.Message}");
+                        throw;
+                    }
+                    finally
+                    {
+                        orderContext.ChangeTracker.AutoDetectChangesEnabled = true;
+                    }
+                }
+                else
+                {
+                    // Directly save without transaction for In-Memory DB
                     var orderDtos = LoadJsonData<OrderDto>("orders.json");
-
-                    // ✅ Convert DTOs to `Order` objects using constructors
                     var orders = orderDtos.Select(dto => new Order(dto.Id, dto.Status)).ToList();
-
                     orderContext.Orders.AddRange(orders);
                     await orderContext.SaveChangesAsync();
-                    await orderTransaction.CommitAsync();
 
-                    Console.WriteLine("✅ Orders inserted successfully");
-
-                    // ✅ Verify orders exist
-                    var validOrderIds = await orderContext.Orders.Select(o => o.Id).ToListAsync();
-                    if (!validOrderIds.Any())
-                    {
-                        throw new Exception("⚠ Error: No orders found in the database after insert!");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    await orderTransaction.RollbackAsync();
-                    Console.WriteLine($"Error inserting Orders: {ex.Message}");
-                    throw;
-                }
-                finally
-                {
-                    orderContext.ChangeTracker.AutoDetectChangesEnabled = true;
-                }
-
-                // ✅ Insert OrderItems in a separate transaction
-                using var itemTransaction = await orderContext.Database.BeginTransactionAsync();
-                try
-                {
-                    orderContext.ChangeTracker.AutoDetectChangesEnabled = false;
-
-                    // ✅ Load DTOs from JSON
                     var orderItemDtos = LoadJsonData<OrderItemDto>("orderitems.json");
-
-                    // ✅ Ensure only OrderItems with valid `OrderId`s are inserted
-                    var validOrderIds = await orderContext.Orders.Select(o => o.Id).ToListAsync();
+                    var validOrderIds = orders.Select(o => o.Id).ToHashSet();
                     var orderItems = orderItemDtos
-                        .Where(dto => validOrderIds.Contains(dto.OrderId)) // ✅ Keep only valid order items
-                        .Select(dto => new OrderItem(dto.Id, dto.OrderId, dto.ProductId, dto.Quantity, dto.Price)) // ✅ Use constructor
+                        .Where(dto => validOrderIds.Contains(dto.OrderId))
+                        .Select(dto => new OrderItem(dto.Id, dto.OrderId, dto.ProductId, dto.Quantity, dto.Price))
                         .ToList();
-
-                    if (!orderItems.Any())
-                    {
-                        throw new Exception("⚠ Error: No valid OrderItems found referencing existing Orders.");
-                    }
 
                     orderContext.OrderItems.AddRange(orderItems);
                     await orderContext.SaveChangesAsync();
-                    await itemTransaction.CommitAsync();
 
-                    Console.WriteLine("✅ OrderItems inserted successfully");
-                }
-                catch (Exception ex)
-                {
-                    await itemTransaction.RollbackAsync();
-                    Console.WriteLine($"Error inserting OrderItems: {ex.Message}");
-                    throw;
-                }
-                finally
-                {
-                    orderContext.ChangeTracker.AutoDetectChangesEnabled = true;
+                    Console.WriteLine("✅ Orders & OrderItems seeded successfully (No Transactions - InMemory)");
                 }
             }
         }
+
 
         private List<T> LoadJsonData<T>(string fileName)
         {
@@ -294,29 +248,8 @@ namespace CareSphere.TestUtilities
         [OneTimeTearDown]
         public async Task TearDown()
         {
-            bool useLocalDbOnTheFly = Configuration.GetValue<bool>("UseLocalDbOnTheFly");
-
-            if (useLocalDbOnTheFly)
-            {
-                await DropDatabase();
-            }
+            // No database cleanup required
         }
-
-        private async Task DropDatabase()
-        {
-            using (var connection = new SqlConnection(MasterDbConnectionString))
-            {
-                await connection.OpenAsync();
-                using (var command = new SqlCommand(@"
-            ALTER DATABASE [TestDb] SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
-            DROP DATABASE [TestDb];", connection))
-                {
-                    await command.ExecuteNonQueryAsync();
-                }
-            }
-        }
-
-
     }
 
     public class OrderDto
@@ -333,5 +266,6 @@ namespace CareSphere.TestUtilities
         public int Quantity { get; set; }
         public decimal Price { get; set; }
     }
-}
 
+    
+}

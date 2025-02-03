@@ -12,8 +12,8 @@ namespace CareSphere.Data.Core.DataContexts
     {
         public CareSphereDbContext(DbContextOptions<CareSphereDbContext> options) : base(options) { }
 
-        public DbSet<Organization> Organization { get; set; }
-        public DbSet<User> User { get; set; }
+        public virtual DbSet<Organization> Organization { get; set; }
+        public virtual DbSet<User> User { get; set; }
 
         //protected override void OnModelCreating(ModelBuilder modelBuilder)
         //{

@@ -10,8 +10,8 @@ namespace CareSphere.Data.Core.DataContexts
 {
     public class OrderDbContext : DbContext
     {
-        public DbSet<Order> Orders { get; set; }
-        public DbSet<OrderItem> OrderItems { get; set; }
+        public virtual DbSet<Order> Orders { get; set; }
+        public virtual DbSet<OrderItem> OrderItems { get; set; }
         public OrderDbContext(DbContextOptions<OrderDbContext> options) : base(options)
         {
 

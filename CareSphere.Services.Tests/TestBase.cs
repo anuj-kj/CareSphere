@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using CareSphere.Data.Configurations;
+
 using CareSphere.Services.Configurations;
 using CareSphere.TestUtilities;
 using Microsoft.EntityFrameworkCore;

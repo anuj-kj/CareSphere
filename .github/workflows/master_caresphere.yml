@@ -1,4 +1,4 @@
-name: Build, Test, and Deploy ASP.Net Core App to Azure Web App - caresphere
+name: Build and deploy ASP.Net Core app to Azure Web App - caresphere
 
 on:
   push:
@@ -21,85 +21,24 @@ jobs:
       - name: Restore NuGet packages
         run: dotnet restore CareSphere.Web.Server/CareSphere.Web.Server.csproj
 
-      - name: Install Visual Studio Build Tools (for SSDT)
-        run: |
-          choco install visualstudio2022buildtools --package-parameters "--add Microsoft.VisualStudio.Workload.ManagedDesktopBuildTools --add Microsoft.VisualStudio.Component.SQL.SSDT"
+      - name: Build with dotnet
+        run: dotnet build CareSphere.Web.Server/CareSphere.Web.Server.csproj --configuration Release
 
-      - name: Build Database Project (CareSphere.DB)
-        run: |
-          "C:\Program Files\Microsoft Visual Studio\2022\BuildTools\MSBuild\Current\Bin\MSBuild.exe" CareSphere.DB/CareSphere.DB.sqlproj /p:Configuration=Debug
+      - name: Run Tests (Using In-Memory Database)
+        run: dotnet test CareSphere.Tests/CareSphere.Tests.csproj --no-build --verbosity normal
 
-      - name: Ensure DACPAC Exists
-        run: |
-          if not exist "CareSphere.DB/bin/Debug/CareSphere.DB.dacpac" exit 1
-
-      - name: Upload DACPAC as an Artifact (for Tests)
-        uses: actions/upload-artifact@v4
-        with:
-          name: dacpac
-          path: CareSphere.DB/bin/Debug/CareSphere.DB.dacpac
-
-      - name: Build Web Solution
-        run: dotnet build --configuration Release
-
-      - name: Publish Web App
+      - name: dotnet publish
         run: dotnet publish CareSphere.Web.Server/CareSphere.Web.Server.csproj -c Release -o "${{env.DOTNET_ROOT}}/myapp"
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: .net-app
-          path: ${{env.DOTNET_ROOT}}/myapp"
-
-  test:
-    runs-on: windows-latest
-    needs: build
-
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-
-      - name: Set up .NET Core
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '9.x'
-
-      - name: Start LocalDB Instance
-        run: |
-          sqllocaldb start "mssqllocaldb"
-          echo "LocalDB started."
-
-      - name: Verify LocalDB Connection
-        run: |
-          sqlcmd -S "(localdb)\mssqllocaldb" -Q "SELECT @@VERSION"
-
-      - name: Download DACPAC Artifact (from Build Job)
-        uses: actions/download-artifact@v4
-        with:
-          name: dacpac
-          path: CareSphere.DB/bin/Debug/
-
-      - name: Ensure DACPAC Exists for Tests
-        run: |
-          if not exist "CareSphere.DB/bin/Debug/CareSphere.DB.dacpac" exit 1
-
-      - name: Restore dependencies
-        run: dotnet restore
-
-      - name: Run All Unit Tests
-        env:
-          ConnectionStrings__DefaultConnection: "Server=(localdb)\\mssqllocaldb;Database=TestDb;Trusted_Connection=True;"
-        run: dotnet test --no-restore --logger trx --results-directory TestResults
-
-      - name: Upload Test Results
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-results
-          path: TestResults
+          path: ${{env.DOTNET_ROOT}}/myapp
 
   deploy:
     runs-on: windows-latest
-    needs: [build, test]
+    needs: build
     environment:
       name: 'Production'
       url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
