@@ -1,18 +1,17 @@
-# Use the official .NET SDK image as the base image
+# ---- Build Stage ----
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 
-# Set the working directory
+# Set the working directory inside the container
 WORKDIR /app
 
-# Copy the solution file and project files
+# Copy the solution file and restore dependencies
 COPY *.sln ./
 
-# Copy only project files first (to leverage caching)
-COPY CareSphere.TestUtilities/*.csproj CareSphere.TestUtilities/
-COPY CareSphere.Services.Tests/*.csproj CareSphere.Services.Tests/
+# Copy project files before restoring (to leverage Docker caching)
 COPY CareSphere.Web.Server/*.csproj CareSphere.Web.Server/
+COPY CareSphere.Services.Tests/*.csproj CareSphere.Services.Tests/
 COPY CareSphere.Data.Tests/*.csproj CareSphere.Data.Tests/
-COPY CareSphere.DB/*.sqlproj CareSphere.DB/
+COPY CareSphere.TestUtilities/*.csproj CareSphere.TestUtilities/
 COPY CareSphere.Data.Core/*.csproj CareSphere.Data.Core/
 COPY CareSphere.Data.Organizations/*.csproj CareSphere.Data.Organizations/
 COPY CareSphere.Domains/*.csproj CareSphere.Domains/
@@ -21,42 +20,34 @@ COPY CareSphere.Services.Organizations/*.csproj CareSphere.Services.Organization
 COPY CareSphere.Services.Users/*.csproj CareSphere.Services.Users/
 COPY CareSphere.Data.Orders/*.csproj CareSphere.Data.Orders/
 COPY CareSphere.Services.Orders/*.csproj CareSphere.Services.Orders/
+COPY CareSphere.DB/*.sqlproj CareSphere.DB/
 
 # Restore dependencies
 RUN dotnet restore
 
-# Copy full directories after restoring dependencies
-COPY CareSphere.TestUtilities/. CareSphere.TestUtilities/
-COPY CareSphere.Services.Tests/. CareSphere.Services.Tests/
-COPY CareSphere.Web.Server/. CareSphere.Web.Server/
-COPY CareSphere.Data.Tests/. CareSphere.Data.Tests/
-COPY CareSphere.DB/. CareSphere.DB/
-COPY CareSphere.Data.Core/. CareSphere.Data.Core/
-COPY CareSphere.Data.Organizations/. CareSphere.Data.Organizations/
-COPY CareSphere.Domains/. CareSphere.Domains/
-COPY CareSphere.Services.Configurations/. CareSphere.Services.Configurations/
-COPY CareSphere.Services.Organizations/. CareSphere.Services.Organizations/
-COPY CareSphere.Services.Users/. CareSphere.Services.Users/
-COPY CareSphere.Data.Orders/. CareSphere.Data.Orders/
-COPY CareSphere.Services.Orders/. CareSphere.Services.Orders/
+# Copy the entire source code
+COPY . ./
 
-# Debug: Ensure required directories exist
-RUN ls -l /app && ls -l /app/CareSphere.Data.Organizations || exit 1
+# Debugging: Check if all necessary files exist
+RUN ls -la /app && ls -la /app/CareSphere.Data.Organizations || exit 1
 
 # Build the application
 RUN dotnet build --no-restore -c Release
 
-# Run the tests
+# Run tests
 RUN dotnet test --no-restore --logger:trx --results-directory /app/TestResults
 
-# Use the official .NET runtime image as the base image for the final image
+# ---- Runtime Stage ----
 FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS runtime
 
 # Set the working directory
 WORKDIR /app
 
-# Copy the build output from the build stage
-COPY --from=build /app ./
+# Copy the build output from the previous stage
+COPY --from=build /app .
 
-# Set the entry point for the container
+# Expose port
+EXPOSE 80
+
+# Set the entry point
 ENTRYPOINT ["dotnet", "CareSphere.Web.Server.dll"]
