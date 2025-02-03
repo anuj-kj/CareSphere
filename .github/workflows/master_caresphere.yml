@@ -21,7 +21,7 @@ jobs:
       - name: Restore NuGet packages
         run: dotnet restore CareSphere.Web.Server/CareSphere.Web.Server.csproj
 
-      - name: Build Web Solution
+      - name: Build Solution (including CareSphere.DB)
         run: dotnet build --configuration Release
 
       - name: Install Visual Studio Build Tools (for SSDT)
@@ -64,11 +64,6 @@ jobs:
 
       - name: Restore dependencies
         run: dotnet restore
-
-      - name: Deploy Database Schema from DACPAC
-        run: |
-          sqlpackage /Action:Publish /SourceFile:"CareSphere.DB/bin/Debug/CareSphere.DB.dacpac" \
-          /TargetServerName:"(localdb)\\mssqllocaldb" /TargetDatabaseName:"TestDb"
 
       - name: Run All Unit Tests
         env:
