@@ -11,6 +11,14 @@ COPY CareSphere.Services.Tests/*.csproj CareSphere.Services.Tests/
 COPY CareSphere.Web.Server/*.csproj CareSphere.Web.Server/
 COPY CareSphere.Data.Tests/*.csproj CareSphere.Data.Tests/
 COPY CareSphere.DB/*.sqlproj CareSphere.DB/
+COPY CareSphere.Data.Core/*.csproj CareSphere.Data.Core/
+COPY CareSphere.Data.Organizations/*.csproj CareSphere.Data.Organizations/
+COPY CareSphere.Domains/*.csproj CareSphere.Domains/
+COPY CareSphere.Services.Configurations/*.csproj CareSphere.Services.Configurations/
+COPY CareSphere.Services.Organizations/*.csproj CareSphere.Services.Organizations/
+COPY CareSphere.Services.Users/*.csproj CareSphere.Services.Users/
+COPY CareSphere.Data.Orders/*.csproj CareSphere.Data.Orders/
+COPY CareSphere.Services.Orders/*.csproj CareSphere.Services.Orders/
 
 # Restore dependencies
 RUN dotnet restore
@@ -21,6 +29,14 @@ COPY CareSphere.Services.Tests/. CareSphere.Services.Tests/
 COPY CareSphere.Web.Server/. CareSphere.Web.Server/
 COPY CareSphere.Data.Tests/. CareSphere.Data.Tests/
 COPY CareSphere.DB/. CareSphere.DB/
+COPY CareSphere.Data.Core/. CareSphere.Data.Core/
+COPY CareSphere.Data.Organizations/. CareSphere.Data.Organizations/
+COPY CareSphere.Domains/. CareSphere.Domains/
+COPY CareSphere.Services.Configurations/. CareSphere.Services.Configurations/
+COPY CareSphere.Services.Organizations/. CareSphere.Services.Organizations/
+COPY CareSphere.Services.Users/. CareSphere.Services.Users/
+COPY CareSphere.Data.Orders/. CareSphere.Data.Orders/
+COPY CareSphere.Services.Orders/. CareSphere.Services.Orders/
 
 # Build the application
 RUN dotnet build --no-restore -c Release
