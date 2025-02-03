@@ -31,24 +31,10 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: .net-app
-          path: ${{env.DOTNET_ROOT}}/myapp
+          path: ${{env.DOTNET_ROOT}}/myapp"
 
   test:
-    runs-on: ubuntu-latest
-
-    services:
-      sqlserver:
-        image: mcr.microsoft.com/mssql/server:2022-latest
-        env:
-          ACCEPT_EULA: "Y"
-          SA_PASSWORD: "YourSecurePassword123!"
-        ports:
-          - 1433:1433
-        options: >-
-          --health-cmd "sqlcmd -S localhost -U sa -P YourSecurePassword123! -Q 'SELECT 1'"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 3
+    runs-on: windows-latest
 
     steps:
       - name: Checkout Repository
@@ -59,24 +45,27 @@ jobs:
         with:
           dotnet-version: '9.x'
 
+      - name: Install SQL Server LocalDB
+        run: |
+          choco install sqlserver-express -y
+          sqllocaldb create "CareSphereTestInstance"
+          sqllocaldb start "CareSphereTestInstance"
+
+      - name: Verify LocalDB Instance
+        run: |
+          sqllocaldb info "CareSphereTestInstance"
+
       - name: Restore dependencies
         run: dotnet restore
-
-      - name: Wait for SQL Server to be Ready
-        run: |
-          for i in {1..10}; do
-            sqlcmd -S localhost -U sa -P "YourSecurePassword123!" -Q "SELECT 1" && break
-            sleep 5
-          done
 
       - name: Deploy Database Schema from DACPAC
         run: |
           sqlpackage /Action:Publish /SourceFile:"CareSphere.DB/bin/Debug/CareSphere.DB.dacpac" \
-          /TargetServerName:"localhost" /TargetDatabaseName:"TestDb" /TargetUser:"sa" /TargetPassword:"YourSecurePassword123!"
+          /TargetServerName:"(localdb)\\CareSphereTestInstance" /TargetDatabaseName:"TestDb"
 
       - name: Run All Unit Tests
         env:
-          ConnectionStrings__DefaultConnection: "Server=localhost,1433;Database=TestDb;User Id=sa;Password=YourSecurePassword123!;"
+          ConnectionStrings__DefaultConnection: "Server=(localdb)\\CareSphereTestInstance;Database=TestDb;Trusted_Connection=True;"
         run: dotnet test --no-restore --logger trx --results-directory TestResults
 
       - name: Upload Test Results
