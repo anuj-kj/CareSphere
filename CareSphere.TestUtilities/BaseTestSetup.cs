@@ -5,21 +5,21 @@ using CareSphere.Data.Configurations;
 using CareSphere.Data.Core.DataContexts;
 using CareSphere.Domains.Core;
 using CareSphere.Domains.Orders;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.SqlServer.Dac;
 using NUnit.Framework;
-using Testcontainers.MsSql;
-using DotNet.Testcontainers.Containers;
 
 namespace CareSphere.TestUtilities
 {
     [SetUpFixture]
     public abstract class BaseTestSetup
     {
-        private static MsSqlContainer _dbContainer;
+        private const string LocalDbConnectionString = "Server=(localdb)\\mssqllocaldb;Database=TestDb;Trusted_Connection=True;MultipleActiveResultSets=true";
+        private const string MasterDbConnectionString = "Server=(localdb)\\mssqllocaldb;Database=master;Trusted_Connection=True;MultipleActiveResultSets=true";
         protected static string ConnectionString;
         protected IServiceProvider ServiceProvider { get; private set; }
         protected IConfiguration Configuration { get; private set; }
@@ -35,9 +35,9 @@ namespace CareSphere.TestUtilities
                 .AddJsonFile("testsettings.json", optional: false, reloadOnChange: true)
                 .Build();
 
-            bool useDocker = Configuration.GetValue<bool>("UseDocker");
+            bool useLocalDbOnTheFly = Configuration.GetValue<bool>("UseLocalDbOnTheFly");
 
-            if (useDocker)
+            if (useLocalDbOnTheFly)
             {
                 lock (_lock)
                 {
@@ -45,36 +45,29 @@ namespace CareSphere.TestUtilities
                     {
                         return;
                     }
-
-                    if (_dbContainer == null)
-                    {
-                        _dbContainer = new MsSqlBuilder()
-                            .WithImage("mcr.microsoft.com/mssql/server:2022-latest") // Use SQL Server 2022 image
-                            .Build();
-                    }
                 }
 
-                if (_dbContainer.State != TestcontainersStates.Running)
+                ConnectionString = LocalDbConnectionString;
+
+                var services = new ServiceCollection();
+                ConfigureServices(services);
+                ServiceProvider = services.BuildServiceProvider();
+
+                if (!_databaseInitialized)
                 {
-                    await _dbContainer.StartAsync();
+                    await CreateDatabase();
+                    await DeploySchema();
+                    await SeedDatabase();
+                    _databaseInitialized = true;
                 }
-
-                ConnectionString = _dbContainer.GetConnectionString() + ";Database=TestDb";
             }
             else
             {
-                ConnectionString = Configuration.GetConnectionString("ExistingSqlServer");
-            }
+                ConnectionString = Configuration.GetConnectionString("DefaultConnection");
 
-            var services = new ServiceCollection();
-            ConfigureServices(services);
-            ServiceProvider = services.BuildServiceProvider();
-
-            if (useDocker && !_databaseInitialized)
-            {
-                await DeploySchema();
-                await SeedDatabase();
-                _databaseInitialized = true;
+                var services = new ServiceCollection();
+                ConfigureServices(services);
+                ServiceProvider = services.BuildServiceProvider();
             }
         }
 
@@ -83,6 +76,18 @@ namespace CareSphere.TestUtilities
             services.AddSingleton<IConfiguration>(Configuration);
             services.AddLogging(configure => configure.AddConsole());
             services.AddDataLayer(options => options.UseSqlServer(ConnectionString));
+        }
+
+        private async Task CreateDatabase()
+        {
+            using (var connection = new SqlConnection(MasterDbConnectionString))
+            {
+                await connection.OpenAsync();
+                using (var command = new SqlCommand("IF DB_ID('TestDb') IS NULL CREATE DATABASE [TestDb];", connection))
+                {
+                    await command.ExecuteNonQueryAsync();
+                }
+            }
         }
 
         private async Task DeploySchema()
@@ -289,11 +294,29 @@ namespace CareSphere.TestUtilities
         [OneTimeTearDown]
         public async Task TearDown()
         {
-            if (_dbContainer != null && _dbContainer.State == TestcontainersStates.Running)
+            bool useLocalDbOnTheFly = Configuration.GetValue<bool>("UseLocalDbOnTheFly");
+
+            if (useLocalDbOnTheFly)
             {
-                await _dbContainer.StopAsync();
+                await DropDatabase();
             }
         }
+
+        private async Task DropDatabase()
+        {
+            using (var connection = new SqlConnection(MasterDbConnectionString))
+            {
+                await connection.OpenAsync();
+                using (var command = new SqlCommand(@"
+            ALTER DATABASE [TestDb] SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
+            DROP DATABASE [TestDb];", connection))
+                {
+                    await command.ExecuteNonQueryAsync();
+                }
+            }
+        }
+
+
     }
 
     public class OrderDto
