@@ -1,3 +1,46 @@
+name: Build, Test, and Deploy ASP.Net Core app to Azure Web App - caresphere
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Ensures full repo is fetched
+          submodules: true  # If your project uses submodules
+
+      - name: Debug - Verify Files
+        shell: pwsh
+        run: Get-ChildItem -Recurse
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.x'
+
+      - name: Restore Dependencies
+        run: dotnet restore CareSphere.Web.Server/CareSphere.Web.Server.csproj
+
+      - name: Build Application
+        run: dotnet build CareSphere.Web.Server/CareSphere.Web.Server.csproj --configuration Release --no-restore
+
+      - name: Publish Application
+        run: dotnet publish CareSphere.Web.Server/CareSphere.Web.Server.csproj -c Release -o myapp
+
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dotnet-app
+          path: myapp
+
   test:
     runs-on: ubuntu-latest
 
@@ -6,7 +49,7 @@
         image: mcr.microsoft.com/mssql/server:2022-latest
         env:
           ACCEPT_EULA: "Y"
-          SA_PASSWORD: "YourSecurePassword123!"
+          SA_PASSWORD: ${{ secrets.SQL_SA_PASSWORD }}
         ports:
           - 1433:1433
         options: >-
@@ -16,7 +59,7 @@
           --health-retries 5
 
     steps:
-      - name: Checkout repository
+      - name: Checkout Repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
@@ -35,7 +78,7 @@
       - name: Run SQL Server Container
         run: |
           docker run -d --name sqlserver-container \
-            -e 'ACCEPT_EULA=Y' -e 'SA_PASSWORD=YourSecurePassword123!' \
+            -e 'ACCEPT_EULA=Y' -e 'SA_PASSWORD=${{ secrets.SQL_SA_PASSWORD }}' \
             -p 1433:1433 \
             mcr.microsoft.com/mssql/server:2022-latest
 
@@ -55,3 +98,51 @@
         with:
           name: test-results
           path: TestResults
+
+  docker:
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Build and Tag Docker Image
+        run: |
+          docker build -t caresphere-app .
+          docker tag caresphere-app myregistry.azurecr.io/caresphere-app:latest
+
+      - name: Log in to Azure Container Registry
+        uses: azure/docker-login@v1
+        with:
+          login-server: myregistry.azurecr.io
+          username: ${{ secrets.ACR_USERNAME }}
+          password: ${{ secrets.ACR_PASSWORD }}
+
+      - name: Push Docker Image to Azure Container Registry
+        run: docker push myregistry.azurecr.io/caresphere-app:latest
+
+  deploy:
+    runs-on: windows-latest
+    needs: docker
+    environment:
+      name: 'Production'
+      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
+
+    steps:
+      - name: Download Build Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: dotnet-app
+
+      - name: Deploy to Azure Web App
+        id: deploy-to-webapp
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: 'caresphere'
+          slot-name: 'Production'
+          package: .
+          publish-profile: ${{ secrets.CARESPHERE_PUBLISHPROFILE }}
