@@ -22,9 +22,22 @@
 	  <ProjectReference Include="..\CareSphere.Data.Configurations\CareSphere.Data.Configurations.csproj" />
 	  <ProjectReference Include="..\CareSphere.Services.Configurations\CareSphere.Services.Configurations.csproj" />
 	  <ProjectReference Include="..\CareSphere.Services.Users\CareSphere.Services.Users.csproj" />
+	  <ProjectReference Include="..\CareSphere.TestUtilities\CareSphere.TestUtilities.csproj" />
 	</ItemGroup>
 	<ItemGroup>
-	  <None Update="appsettings.json">
+	  <None Update="SeedData\orderitems.json">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </None>
+	  <None Update="SeedData\orders.json">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </None>
+	  <None Update="SeedData\organizations.json">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </None>
+	  <None Update="SeedData\users.json">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </None>
+	  <None Update="testsettings.json">
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </None>
 	</ItemGroup>

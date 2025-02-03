@@ -1,0 +1,50 @@
+[
+    {
+        "UserId": 3,
+        "Name": "New User",
+        "Username": "newuser",
+        "PasswordHash": "48c0b4ec512adf9820a77187cc8b55b4da280c1a192d05ac458b3e0535100c0b",
+        "Role": "User",
+        "Email": "newuser@example.com",
+        "DoctorId": null,
+        "PatientId": null,
+        "StaffId": null,
+        "CreatedAt": "2024-12-29T11:57:28.420"
+    },
+    {
+        "UserId": 4,
+        "Name": "Anuj Jha",
+        "Username": "Anuj Jha",
+        "PasswordHash": "48c0b4ec512adf9820a77187cc8b55b4da280c1a192d05ac458b3e0535100c0b",
+        "Role": "User",
+        "Email": "net.anuj@gmail.com",
+        "DoctorId": null,
+        "PatientId": null,
+        "StaffId": null,
+        "CreatedAt": "2024-12-29T12:14:48.833"
+    },
+    {
+        "UserId": 5,
+        "Name": "Anuj k j",
+        "Username": "test@test.com",
+        "PasswordHash": "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8",
+        "Role": "User",
+        "Email": "test@test.com",
+        "DoctorId": null,
+        "PatientId": null,
+        "StaffId": null,
+        "CreatedAt": "2024-12-29T13:51:25.810"
+    },
+    {
+        "UserId": 6,
+        "Name": "Test test",
+        "Username": "test1@test.com",
+        "PasswordHash": "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8",
+        "Role": "User",
+        "Email": "test1@test.com",
+        "DoctorId": null,
+        "PatientId": null,
+        "StaffId": null,
+        "CreatedAt": "2024-12-29T13:57:10.253"
+    }
+]

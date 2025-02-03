@@ -7,13 +7,14 @@ using CareSphere.Data.Core.Impl;
 using CareSphere.Data.Core.Interfaces;
 using CareSphere.Data.Organaizations.Impl;
 using CareSphere.Data.Organaizations.Interfaces;
+using CareSphere.TestUtilities;
 using Microsoft.Extensions.DependencyInjection;
 using NUnit.Framework;
 
 namespace CareSphere.Data.Tests.OrganizationTests
 {
     [TestFixture]
-    public class OrganizationTests : TestBase
+    public class OrganizationTests : BaseTestSetup
     {
         private IOrganizationRepository _organizationRepository;
         [SetUp]

@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Reflection;
+﻿using System.Configuration;
 using System.Text.Json;
 using System.Threading.Tasks;
 using CareSphere.Data.Configurations;
@@ -15,54 +12,76 @@ using Microsoft.Extensions.Logging;
 using Microsoft.SqlServer.Dac;
 using NUnit.Framework;
 using Testcontainers.MsSql;
+using DotNet.Testcontainers.Containers;
 
-namespace CareSphere.Data.Tests
+namespace CareSphere.TestUtilities
 {
     [SetUpFixture]
-    public abstract class TestBase
+    public abstract class BaseTestSetup
     {
         private static MsSqlContainer _dbContainer;
         protected static string ConnectionString;
         protected IServiceProvider ServiceProvider { get; private set; }
         protected IConfiguration Configuration { get; private set; }
         private static bool _databaseInitialized;
+        private static readonly object _lock = new object();
         private string _dacpacPath;
 
         [OneTimeSetUp]
         public async Task Setup()
         {
-            _dbContainer = new MsSqlBuilder()
-                .WithImage("mcr.microsoft.com/mssql/server:2022-latest") // Use SQL Server 2022 image
-                .Build();
-
-            await _dbContainer.StartAsync();
-            ConnectionString = _dbContainer.GetConnectionString() + ";Database=TestDb";
-
             Configuration = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
                 .AddJsonFile("testsettings.json", optional: false, reloadOnChange: true)
                 .Build();
 
+            bool useDocker = Configuration.GetValue<bool>("UseDocker");
+
+            if (useDocker)
+            {
+                lock (_lock)
+                {
+                    if (_databaseInitialized)
+                    {
+                        return;
+                    }
+
+                    if (_dbContainer == null)
+                    {
+                        _dbContainer = new MsSqlBuilder()
+                            .WithImage("mcr.microsoft.com/mssql/server:2022-latest") // Use SQL Server 2022 image
+                            .Build();
+                    }
+                }
+
+                if (_dbContainer.State != TestcontainersStates.Running)
+                {
+                    await _dbContainer.StartAsync();
+                }
+
+                ConnectionString = _dbContainer.GetConnectionString() + ";Database=TestDb";
+            }
+            else
+            {
+                ConnectionString = Configuration.GetConnectionString("ExistingSqlServer");
+            }
+
             var services = new ServiceCollection();
             ConfigureServices(services);
             ServiceProvider = services.BuildServiceProvider();
 
-            if (!_databaseInitialized)
+            if (useDocker && !_databaseInitialized)
             {
                 await DeploySchema();
                 await SeedDatabase();
                 _databaseInitialized = true;
             }
-            
         }
 
-        private void ConfigureServices(IServiceCollection services)
+        protected virtual void ConfigureServices(IServiceCollection services)
         {
             services.AddSingleton<IConfiguration>(Configuration);
-            //services.AddDbContext<CareSphereDbContext>(options => options.UseSqlServer(ConnectionString));
-            //services.AddDbContext<OrderDbContext>(options => options.UseSqlServer(ConnectionString));
             services.AddLogging(configure => configure.AddConsole());
-            //services.AddSingleton<IConfiguration>(Configuration);
             services.AddDataLayer(options => options.UseSqlServer(ConnectionString));
         }
 
@@ -260,9 +279,6 @@ namespace CareSphere.Data.Tests
             }
         }
 
-
-
-
         private List<T> LoadJsonData<T>(string fileName)
         {
             var filePath = Path.Combine(Directory.GetCurrentDirectory(), "SeedData", fileName);
@@ -273,9 +289,13 @@ namespace CareSphere.Data.Tests
         [OneTimeTearDown]
         public async Task TearDown()
         {
-            await _dbContainer.StopAsync();
+            if (_dbContainer != null && _dbContainer.State == TestcontainersStates.Running)
+            {
+                await _dbContainer.StopAsync();
+            }
         }
     }
+
     public class OrderDto
     {
         public Guid Id { get; set; }
@@ -290,5 +310,5 @@ namespace CareSphere.Data.Tests
         public int Quantity { get; set; }
         public decimal Price { get; set; }
     }
-
 }
+

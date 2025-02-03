@@ -1,0 +1,42 @@
+[
+    {
+        "OrganizationId": 1,
+        "Name": "Central Health Clinic",
+        "Address": "123 Main Street, Springfield",
+        "PhoneNumber": "1234567890",
+        "Email": "info@centralhealth.com",
+        "CreatedAt": "2024-12-26T12:23:56.330"
+    },
+    {
+        "OrganizationId": 2,
+        "Name": "Downtown Medical Center",
+        "Address": "456 Elm Avenue, Metropolis",
+        "PhoneNumber": "9876543210",
+        "Email": "contact@downtownmed.com",
+        "CreatedAt": "2024-12-26T12:23:56.330"
+    },
+    {
+        "OrganizationId": 3,
+        "Name": "Pine Valley Hospital",
+        "Address": "789 Pine Drive, Riverdale",
+        "PhoneNumber": "5551234567",
+        "Email": "admin@pinevalleyhospital.com",
+        "CreatedAt": "2024-12-26T12:23:56.330"
+    },
+    {
+        "OrganizationId": 4,
+        "Name": "Seaside Healthcare",
+        "Address": "321 Ocean Road, Seaview",
+        "PhoneNumber": "4449876543",
+        "Email": "support@seasidehealth.com",
+        "CreatedAt": "2024-12-26T12:23:56.330"
+    },
+    {
+        "OrganizationId": 5,
+        "Name": "Green Meadows Clinic",
+        "Address": "654 Meadow Lane, Hilltown",
+        "PhoneNumber": "6667778888",
+        "Email": "greenmeadows@clinic.com",
+        "CreatedAt": "2024-12-26T12:23:56.330"
+    }
+]

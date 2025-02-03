@@ -31,6 +31,7 @@
   <ItemGroup>
     <ProjectReference Include="..\CareSphere.Data.Configurations\CareSphere.Data.Configurations.csproj" />
     <ProjectReference Include="..\CareSphere.Data.Organaizations\CareSphere.Data.Organaizations.csproj" />
+    <ProjectReference Include="..\CareSphere.TestUtilities\CareSphere.TestUtilities.csproj" />
   </ItemGroup>
 
   <ItemGroup>

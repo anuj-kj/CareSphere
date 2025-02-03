@@ -12,6 +12,7 @@ using NUnit.Framework;
 
 namespace CareSphere.Services.Tests.Users
 {
+    [TestFixture]
     public class UserServiceTests : TestBase
     {
         private IUserService _userService;
