@@ -5,7 +5,7 @@ FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /app
 
 # Copy the solution file and project files
-COPY *.sln .
+COPY *.sln ./
 COPY CareSphere.TestUtilities/*.csproj CareSphere.TestUtilities/
 COPY CareSphere.Services.Tests/*.csproj CareSphere.Services.Tests/
 COPY CareSphere.Web.Server/*.csproj CareSphere.Web.Server/
@@ -55,6 +55,3 @@ COPY --from=build /app .
 
 # Set the entry point for the container
 ENTRYPOINT ["dotnet", "CareSphere.Web.Server.dll"]
-
-
-
