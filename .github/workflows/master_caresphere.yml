@@ -80,3 +80,4 @@ jobs:
           slot-name: 'Production'
           package: .
           publish-profile: ${{ secrets.CARESPHERE_PUBLISHPROFILE }}
+

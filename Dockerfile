@@ -4,11 +4,13 @@ FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 # Set the working directory
 WORKDIR /app
 
-# Copy the solution file and restore dependencies
+# Copy the solution file and project files
 COPY *.sln .
 COPY CareSphere.TestUtilities/*.csproj CareSphere.TestUtilities/
 COPY CareSphere.Services.Tests/*.csproj CareSphere.Services.Tests/
 COPY CareSphere.Web.Server/*.csproj CareSphere.Web.Server/
+
+# Restore dependencies
 RUN dotnet restore
 
 # Copy the rest of the application code
@@ -33,3 +35,4 @@ COPY --from=build /app .
 
 # Set the entry point for the container
 ENTRYPOINT ["dotnet", "CareSphere.Web.Server.dll"]
+
