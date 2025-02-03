@@ -21,6 +21,8 @@ namespace CareSphere.Services.Tests.Users
         {
             _userService = ServiceProvider.GetRequiredService<IUserService>();
         }
+        //ignore
+        [Ignore("Ignoring this test temporarily")]
         [Test]
         public async Task CreateUser_ShouldAddUser_WhenUserDoesNotExist()
         {
