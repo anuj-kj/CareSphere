@@ -9,6 +9,8 @@ COPY *.sln .
 COPY CareSphere.TestUtilities/*.csproj CareSphere.TestUtilities/
 COPY CareSphere.Services.Tests/*.csproj CareSphere.Services.Tests/
 COPY CareSphere.Web.Server/*.csproj CareSphere.Web.Server/
+COPY CareSphere.Web.Client/*.csproj CareSphere.Web.Client/
+COPY CareSphere.DB/*.sqlproj CareSphere.DB/
 
 # Restore dependencies
 RUN dotnet restore
@@ -17,6 +19,8 @@ RUN dotnet restore
 COPY CareSphere.TestUtilities/. CareSphere.TestUtilities/
 COPY CareSphere.Services.Tests/. CareSphere.Services.Tests/
 COPY CareSphere.Web.Server/. CareSphere.Web.Server/
+COPY CareSphere.Web.Client/. CareSphere.Web.Client/
+COPY CareSphere.DB/. CareSphere.DB/
 
 # Build the application
 RUN dotnet build --no-restore -c Release
