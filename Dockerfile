@@ -6,19 +6,19 @@ WORKDIR /app
 
 # Copy the solution file and project files
 COPY *.sln ./
+COPY CareSphere.Domains/*.csproj CareSphere.Domains/
+COPY CareSphere.DB/*.sqlproj CareSphere.DB/
+COPY CareSphere.Data.Core/*.csproj CareSphere.Data.Core/
+COPY CareSphere.Data.Orders/*.csproj CareSphere.Data.Orders/
+COPY CareSphere.Data.Organizations/*.csproj CareSphere.Data.Organizations/
+COPY CareSphere.Services.Configurations/*.csproj CareSphere.Services.Configurations/
+COPY CareSphere.Services.Organizations/*.csproj CareSphere.Services.Organizations/
+COPY CareSphere.Services.Users/*.csproj CareSphere.Services.Users/
+COPY CareSphere.Services.Orders/*.csproj CareSphere.Services.Orders/
 COPY CareSphere.TestUtilities/*.csproj CareSphere.TestUtilities/
 COPY CareSphere.Services.Tests/*.csproj CareSphere.Services.Tests/
 COPY CareSphere.Web.Server/*.csproj CareSphere.Web.Server/
 COPY CareSphere.Data.Tests/*.csproj CareSphere.Data.Tests/
-COPY CareSphere.DB/*.sqlproj CareSphere.DB/
-COPY CareSphere.Data.Core/*.csproj CareSphere.Data.Core/
-COPY CareSphere.Data.Organizations/*.csproj CareSphere.Data.Organizations/
-COPY CareSphere.Domains/*.csproj CareSphere.Domains/
-COPY CareSphere.Services.Configurations/*.csproj CareSphere.Services.Configurations/
-COPY CareSphere.Services.Organizations/*.csproj CareSphere.Services.Organizations/
-COPY CareSphere.Services.Users/*.csproj CareSphere.Services.Users/
-COPY CareSphere.Data.Orders/*.csproj CareSphere.Data.Orders/
-COPY CareSphere.Services.Orders/*.csproj CareSphere.Services.Orders/
 
 # Restore dependencies
 RUN dotnet restore
