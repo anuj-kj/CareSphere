@@ -22,10 +22,14 @@ jobs:
         run: dotnet restore
 
       - name: Build only C# projects (ignore .sqlproj)
-        run: dotnet build --configuration Release **/*.csproj
+        run: |
+          echo "Finding all .csproj files..."
+          Get-ChildItem -Path . -Recurse -Filter *.csproj | ForEach-Object { dotnet build $_.FullName --configuration Release }
 
       - name: Run Tests (Using In-Memory Database)
-        run: dotnet test --no-build --verbosity normal **/*.csproj
+        run: |
+          echo "Finding all test .csproj files..."
+          Get-ChildItem -Path . -Recurse -Filter *Tests.csproj | ForEach-Object { dotnet test $_.FullName --no-build --verbosity normal }
 
       - name: dotnet publish
         run: dotnet publish CareSphere.Web.Server/CareSphere.Web.Server.csproj -c Release -o "${{env.DOTNET_ROOT}}/myapp"
