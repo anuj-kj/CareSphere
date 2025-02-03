@@ -9,7 +9,7 @@ COPY *.sln .
 COPY CareSphere.TestUtilities/*.csproj CareSphere.TestUtilities/
 COPY CareSphere.Services.Tests/*.csproj CareSphere.Services.Tests/
 COPY CareSphere.Web.Server/*.csproj CareSphere.Web.Server/
-COPY CareSphere.Web.Client/*.csproj CareSphere.Web.Client/
+COPY CareSphere.Data.Tests/*.csproj CareSphere.Data.Tests/
 COPY CareSphere.DB/*.sqlproj CareSphere.DB/
 
 # Restore dependencies
@@ -19,7 +19,7 @@ RUN dotnet restore
 COPY CareSphere.TestUtilities/. CareSphere.TestUtilities/
 COPY CareSphere.Services.Tests/. CareSphere.Services.Tests/
 COPY CareSphere.Web.Server/. CareSphere.Web.Server/
-COPY CareSphere.Web.Client/. CareSphere.Web.Client/
+COPY CareSphere.Data.Tests/. CareSphere.Data.Tests/
 COPY CareSphere.DB/. CareSphere.DB/
 
 # Build the application
@@ -39,4 +39,5 @@ COPY --from=build /app .
 
 # Set the entry point for the container
 ENTRYPOINT ["dotnet", "CareSphere.Web.Server.dll"]
+
 
