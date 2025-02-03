@@ -21,10 +21,10 @@ jobs:
       - name: Restore NuGet packages
         run: dotnet restore CareSphere.Web.Server/CareSphere.Web.Server.csproj
 
-      - name: Build with dotnet
-        run: dotnet build CareSphere.Web.Server/CareSphere.Web.Server.csproj --configuration Release
+      - name: Build Solution (including CareSphere.DB)
+        run: dotnet build --configuration Release
 
-      - name: dotnet publish
+      - name: Publish Web App
         run: dotnet publish CareSphere.Web.Server/CareSphere.Web.Server.csproj -c Release -o "${{env.DOTNET_ROOT}}/myapp"
 
       - name: Upload artifact for deployment job
@@ -45,27 +45,24 @@ jobs:
         with:
           dotnet-version: '9.x'
 
-      - name: Install SQL Server LocalDB
+      - name: Start LocalDB Instance
         run: |
-          choco install sqlserver-express -y
-          sqllocaldb create "CareSphereTestInstance"
-          sqllocaldb start "CareSphereTestInstance"
+          sqllocaldb start "mssqllocaldb"
+          echo "LocalDB started."
 
-      - name: Verify LocalDB Instance
+      - name: Verify LocalDB Connection
         run: |
-          sqllocaldb info "CareSphereTestInstance"
+          sqlcmd -S "(localdb)\mssqllocaldb" -Q "SELECT @@VERSION"
 
       - name: Restore dependencies
         run: dotnet restore
 
-      - name: Deploy Database Schema from DACPAC
-        run: |
-          sqlpackage /Action:Publish /SourceFile:"CareSphere.DB/bin/Debug/CareSphere.DB.dacpac" \
-          /TargetServerName:"(localdb)\\CareSphereTestInstance" /TargetDatabaseName:"TestDb"
+      - name: Build Database Project (CareSphere.DB)
+        run: dotnet build CareSphere.DB/CareSphere.DB.sqlproj --configuration Release
 
       - name: Run All Unit Tests
         env:
-          ConnectionStrings__DefaultConnection: "Server=(localdb)\\CareSphereTestInstance;Database=TestDb;Trusted_Connection=True;"
+          ConnectionStrings__DefaultConnection: "Server=(localdb)\\mssqllocaldb;Database=TestDb;Trusted_Connection=True;"
         run: dotnet test --no-restore --logger trx --results-directory TestResults
 
       - name: Upload Test Results
