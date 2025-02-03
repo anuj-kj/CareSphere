@@ -21,11 +21,11 @@ jobs:
       - name: Restore NuGet packages
         run: dotnet restore
 
-      - name: Build with dotnet
-        run: dotnet build --configuration Release
+      - name: Build only C# projects (ignore .sqlproj)
+        run: dotnet build --configuration Release **/*.csproj
 
       - name: Run Tests (Using In-Memory Database)
-        run: dotnet test --no-build --verbosity normal
+        run: dotnet test --no-build --verbosity normal **/*.csproj
 
       - name: dotnet publish
         run: dotnet publish CareSphere.Web.Server/CareSphere.Web.Server.csproj -c Release -o "${{env.DOTNET_ROOT}}/myapp"
