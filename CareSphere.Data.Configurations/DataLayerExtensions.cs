@@ -1,5 +1,5 @@
 ﻿using CareSphere.Data.Core.DataContexts;
-using CareSphere.Data.Core.Impl;
+
 using CareSphere.Data.Core.Interfaces;
 using CareSphere.Data.Orders.interfaces;
 using CareSphere.Data.Organaizations.Impl;
@@ -27,12 +27,14 @@ namespace CareSphere.Data.Configurations
                 services.TryAddScoped<CareSphereDbContext>();
                 services.TryAddScoped<OrderDbContext>();
             }
+            services.AddScoped<IUnitOfWork<CareSphereDbContext>, CareSphereUnitOfWork>();
 
             // ✅ Always register UnitOfWork and repositories (needed for DI)
-            services.AddScoped<IUnitOfWork, UnitOfWork<CareSphereDbContext>>();
-            services.AddScoped<IUnitOfWork, UnitOfWork<OrderDbContext>>();
 
-            services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
+            services.AddScoped<ICareSphereUnitOfWork, CareSphereUnitOfWork>();
+            services.AddScoped<IOrderUnitOfWork, OrderUnitOfWork>();
+
+            services.AddScoped(typeof(IRepository<,>), typeof(Repository<,>));
             services.AddScoped<IOrganizationRepository, OrganizationRepository>();
             services.AddScoped<IOrderRepository, OrderRepository>();
 

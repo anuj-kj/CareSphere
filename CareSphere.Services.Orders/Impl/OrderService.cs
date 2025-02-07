@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using CareSphere.Data.Core.DataContexts;
 using CareSphere.Data.Core.Interfaces;
 using CareSphere.Data.Orders.interfaces;
 using CareSphere.Domains.Events;
@@ -14,11 +15,12 @@ namespace CareSphere.Services.Orders.Impl
 {
     public class OrderService : IOrderService
     {
-        private readonly IUnitOfWork _unitOfWork;
+        private readonly IOrderUnitOfWork _unitOfWork;
+
         private readonly IOrderRepository _orderRepository;
         private readonly IDomainEventPublisher _domainEventPublisher;
 
-        public OrderService(IOrderRepository orderRepository, IDomainEventPublisher domainEventPublisher, IUnitOfWork unitOfWork)
+        public OrderService(IOrderRepository orderRepository, IDomainEventPublisher domainEventPublisher, IOrderUnitOfWork unitOfWork)
         {
             _orderRepository = orderRepository;
             _domainEventPublisher = domainEventPublisher;

@@ -1,11 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using CareSphere.Data.Core.Impl;
+﻿
+using CareSphere.Data.Core.DataContexts;
 using CareSphere.Data.Core.Interfaces;
-using CareSphere.Data.Organaizations.Impl;
 using CareSphere.Data.Organaizations.Interfaces;
 using CareSphere.TestUtilities;
 using Microsoft.Extensions.DependencyInjection;
@@ -20,8 +15,9 @@ namespace CareSphere.Data.Tests.OrganizationTests
         [SetUp]
         public void Initialize()
         {
-            var unitOfWork= ServiceProvider.GetRequiredService<IUnitOfWork>();
-           // _organizationRepository = unitOfWork.GetRepository<IOrganizationRepository>();
+            var unitOfWork = ServiceProvider.GetRequiredService<ICareSphereUnitOfWork>();  // ✅ Correct
+
+            // _organizationRepository = unitOfWork.GetRepository<IOrganizationRepository>();
             _organizationRepository = ServiceProvider.GetRequiredService<IOrganizationRepository>();
         }
         [Test]

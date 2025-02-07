@@ -12,15 +12,15 @@ namespace CareSphere.Services.Users.Impl
 {
     public class UserService: IUserService
     {
-        private IUnitOfWork UnitOfWork { get; set; }
+        private ICareSphereUnitOfWork UnitOfWork { get; set; }
 
-        public UserService(IUnitOfWork unitOfWork)
+        public UserService(ICareSphereUnitOfWork unitOfWork)
         {
             UnitOfWork = unitOfWork;
         }
         public async Task<User> CreateUser(User user, string? password=null, bool register=false)
         {
-            var userRepository = UnitOfWork.GetRepository<IRepository<User>>();
+            var userRepository = UnitOfWork.Repository<User>();
             // Check if user with the same email already exists
             var existingUser = await userRepository.GetByPropertyAsync(u => u.Email == user.Email);
             if (existingUser != null)
@@ -55,7 +55,7 @@ namespace CareSphere.Services.Users.Impl
         }
         public async Task<User> GetUserByCredential(string usernameOrEmail, string password)
         {
-            var userRepository = UnitOfWork.GetRepository<IRepository<User>>();
+            var userRepository = UnitOfWork.Repository<User>();
             var user= await userRepository.GetByPropertyAsync(u => u.Username == usernameOrEmail || u.Email == usernameOrEmail);
             if(user == null)
             {

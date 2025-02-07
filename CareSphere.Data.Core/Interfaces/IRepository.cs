@@ -4,10 +4,11 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 
 namespace CareSphere.Data.Core.Interfaces
 {
-    public interface IRepository<T> where T : class
+    public interface IRepository<T, TContext> where T : class where TContext : DbContext
     {
         Task<T> GetByIdAsync(int id);
         Task<T> GetByGuidIdAsync(Guid id);
@@ -17,5 +18,7 @@ namespace CareSphere.Data.Core.Interfaces
         void Delete(T entity);
         Task<T> GetByPropertyAsync(Expression<Func<T, bool>> predicate);
     }
+
+
 
 }
