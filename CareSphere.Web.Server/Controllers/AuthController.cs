@@ -9,6 +9,8 @@ using CareSphere.Services.Users.Interfaces;
 using CareSphere.Domains.Core;
 using CareSphere.Web.Server.Requests;
 using System.Data;
+using Google.Apis.Auth;
+using CareSphere.Web.Server.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
@@ -104,6 +106,50 @@ public class AuthController : ControllerBase
         var token = GenerateJwtToken(user);
         return Redirect($"http://localhost:49907/auth/callback?token={token}");
     }
+    [HttpPost("verify-google-token")]
+    public async Task<IActionResult> VerifyGoogleToken([FromBody] GoogleTokenValidationRequest request)
+    {
+        if (string.IsNullOrEmpty(request.Credential))
+        {
+            return BadRequest(new { message = "Token is required." });
+        }
+
+        try
+        {
+            GoogleJsonWebSignature.ValidationSettings settings = new GoogleJsonWebSignature.ValidationSettings
+            {
+                Audience = new[] { _configuration["Authentication:Google:ClientId"] } // Ensure it matches your Google Client ID
+            };
+
+            GoogleJsonWebSignature.Payload payload = await GoogleJsonWebSignature.ValidateAsync(request.Credential, settings);
+
+            // Get or create the user
+            var user = await CreateOrGetUser(payload.Email, payload.Email, payload.GivenName, payload.FamilyName);
+            if (user == null)
+            {
+                user = new User
+                {
+                    Email = payload.Email,
+                    Name = payload.Name,
+                    Username = payload.Email
+                };
+                user = await _userService.CreateUser(user);
+            }
+
+            // Generate JWT token
+            var token = GenerateJwtToken(user);
+
+            return Ok(new
+            {               
+                Token = token
+            });
+        }
+        catch (Exception ex)
+        {
+            return Unauthorized(new { message = "Invalid token.", error = ex.Message });
+        }
+    }
+
     private async Task<User> CreateUser(AuthenticateResult result)
     {
         var username = result.Principal.Identity.Name;
@@ -118,6 +164,19 @@ public class AuthController : ControllerBase
                 Name = $"{firstName} {lastName}",                
             };
             await _userService.CreateUser(newUser);
+        return newUser;
+    }
+    private async Task<User> CreateOrGetUser(string userName, string email, string firstName, string lastName)
+    {
+        
+
+        var newUser = new User
+        {
+            Username = userName,
+            Email = email,
+            Name = $"{firstName} {lastName}",
+        };
+        await _userService.CreateUser(newUser);
         return newUser;
     }
 

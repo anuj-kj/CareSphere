@@ -1,0 +1,57 @@
+/* Index.css */
+
+/* Reset Margins and Padding */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Default Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #007bff;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: #0056b3;
+}
+
+/* Bootstrap Overrides (if needed) */
+.container {
+  max-width: 1200px; /* Adjust Bootstrap's container width if necessary */
+}
+
+/* Button Customizations */
+.btn-primary {
+  background-color: #007bff; /* Ensure primary buttons match the branding */
+  border-color: #0056b3;
+}
+
+.btn-primary:hover {
+  background-color: #0056b3;
+  border-color: #003f7f;
+}
+
+/* Section Styling */
+.section {
+  padding: 40px 20px;
+}
+
+.section-title {
+  text-align: center;
+  margin-bottom: 20px;
+  font-size: 2rem;
+  font-weight: bold;
+}
+
+/* Image Styling */
+.img-responsive {
+  max-width: 100%;
+  height: auto;
+  border-radius: 4px;
+}
