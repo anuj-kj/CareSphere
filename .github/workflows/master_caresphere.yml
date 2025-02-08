@@ -28,8 +28,11 @@ jobs:
           echo "Building all .csproj files (excluding .sqlproj)..."
           Get-ChildItem -Path . -Recurse -Filter *.csproj | Where-Object { $_.FullName -notmatch '\.sqlproj$' } | ForEach-Object { dotnet build $_.FullName --configuration Release }
 
-      - name: Run Tests (Using In-Memory Database)
-        run: dotnet test --no-build --configuration Release --verbosity normal
+      # ✅ FIX: Run Tests (Ignoring `.sqlproj`)
+      - name: Run Tests (Only Test Projects)
+        run: |
+          echo "Running tests without SQL project..."
+          Get-ChildItem -Path . -Recurse -Filter *Tests.csproj | ForEach-Object { dotnet test $_.FullName --no-build --configuration Release --verbosity normal }
 
       - name: dotnet publish
         run: dotnet publish CareSphere.Web.Server/CareSphere.Web.Server.csproj -c Release -o "${{env.DOTNET_ROOT}}/api"
