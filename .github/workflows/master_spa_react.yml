@@ -21,11 +21,11 @@ jobs:
 
       - name: Verify working directory
         run: |
-          echo "Verifying working directory..."
-          if [ ! -d "CareSphere.Web.SPAClient" ]; then
-            echo "Directory CareSphere.Web.SPAClient does not exist."
+          Write-Host "Verifying working directory..."
+          if (-Not (Test-Path -Path "CareSphere.Web.SPAClient")) {
+            Write-Error "Directory CareSphere.Web.SPAClient does not exist."
             exit 1
-          fi
+          }
 
       - name: Install dependencies for SPA Client
         run: npm install
