@@ -1,70 +1,38 @@
-name: Deploy CareSphere SPA Client
+name: Manually Deploy React (Vite) App to Azure Web App - caresphere
 
 on:
-  push:
-    branches:
-      - main
-  workflow_dispatch:
+  workflow_dispatch:  # Manual trigger only
 
 jobs:
   build:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: List directory contents
-        run: |
-          Write-Host "Listing directory contents..."
-          Get-ChildItem -Path .
+      - uses: actions/checkout@v4
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '16.x'
+          node-version: '18.x'  # Adjust based on your setup
 
-      - name: Verify working directory
+      - name: Install dependencies
         run: |
-          Write-Host "Verifying working directory..."
-          if (-Not (Test-Path -Path "carephere.web.spaclient")) {
-            Write-Error "Directory carephere.web.spaclient does not exist."
-            exit 1
-          }
+          cd caresphere.web.spaclient
+          npm install
 
-      - name: Install dependencies for SPA Client
-        run: npm install
-        working-directory: carephere.web.spaclient
-
-      - name: Add crypto polyfill
-        run: npm install crypto-browserify
-        working-directory: carephere.web.spaclient
-
-      - name: Create polyfills.js if it does not exist
+      - name: Build React (Vite) app
         run: |
-          if (-Not (Test-Path -Path "carephere.web.spaclient/src/polyfills.js")) {
-            New-Item -ItemType File -Path "carephere.web.spaclient/src/polyfills.js"
-          }
+          cd caresphere.web.spaclient
+          npm run build --mode production  # Uses .env.production
 
-      - name: Add crypto polyfill to polyfills.js
-        run: |
-          echo "import { crypto } from 'crypto-browserify'; global.crypto = crypto;" >> carephere.web.spaclient/src/polyfills.js
-        working-directory: carephere.web.spaclient
-
-      - name: Build SPA Client
-        run: npm run build --if-present
-        env:
-          NODE_ENV: production
-        working-directory: carephere.web.spaclient
-
-      - name: Upload SPA Client build artifacts
+      - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
-          name: spa-client-build
-          path: carephere.web.spaclient/dist
+          name: react-app
+          path: caresphere.web.spaclient/dist  # Vite build output
 
   deploy:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     needs: build
     environment:
       name: 'Production'
@@ -72,17 +40,16 @@ jobs:
     if: github.event_name == 'workflow_dispatch'
 
     steps:
-      - name: Download SPA Client build artifacts
+      - name: Download artifact from build job
         uses: actions/download-artifact@v4
         with:
-          name: spa-client-build
-          path: ./dist
+          name: react-app
 
-      - name: Deploy SPA Client to Azure Web App
+      - name: Deploy React to Azure Web App
+        id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
           app-name: 'caresphere'
           slot-name: 'Production'
-          package: ./dist
+          package: .
           publish-profile: ${{ secrets.CARESPHERE_PUBLISHPROFILE }}
-          target-path: 'wwwroot'
