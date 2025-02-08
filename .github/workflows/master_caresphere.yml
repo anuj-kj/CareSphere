@@ -39,14 +39,16 @@ jobs:
       - name: dotnet publish
         run: dotnet publish CareSphere.Web.Server/CareSphere.Web.Server.csproj -c Release -o "${{env.DOTNET_ROOT}}/myapp"
 
-      # 🛑 FIX: Preserve existing `wwwroot/` folder before deployment
+      # 🛑 FIX: Preserve existing React frontend (`wwwroot/`) using PowerShell
       - name: Preserve React frontend (`wwwroot`)
+        shell: pwsh
         run: |
-          if [ -d "/home/site/wwwroot" ]; then
-            echo "Preserving existing React app..."
-            mkdir -p "${{env.DOTNET_ROOT}}/myapp/wwwroot"
-            cp -r /home/site/wwwroot/* "${{env.DOTNET_ROOT}}/myapp/wwwroot/"
-          fi
+          $wwwrootPath = "$env:DOTNET_ROOT\myapp\wwwroot"
+          if (Test-Path "D:\home\site\wwwroot") {
+            Write-Host "Preserving existing React app..."
+            New-Item -ItemType Directory -Force -Path $wwwrootPath
+            Copy-Item -Path "D:\home\site\wwwroot\*" -Destination $wwwrootPath -Recurse -Force
+          }
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
@@ -68,15 +70,17 @@ jobs:
         with:
           name: .net-app
 
-      # 🛑 FIX: Ensure React remains untouched during deployment
+      # 🛑 FIX: Ensure Web API does NOT delete the React frontend during deployment
       - name: Merge Web API with existing React frontend
+        shell: pwsh
         run: |
-          echo "Merging Web API deployment with existing React frontend..."
-          mkdir -p /home/site/deploy
-          cp -r . /home/site/deploy
-          if [ -d "/home/site/wwwroot" ]; then
-            cp -r /home/site/wwwroot/* /home/site/deploy/wwwroot/
-          fi
+          Write-Host "Merging Web API deployment with existing React frontend..."
+          $deployPath = "D:\home\site\deploy"
+          New-Item -ItemType Directory -Force -Path $deployPath
+          Copy-Item -Path "." -Destination $deployPath -Recurse -Force
+          if (Test-Path "D:\home\site\wwwroot") {
+            Copy-Item -Path "D:\home\site\wwwroot\*" -Destination "$deployPath\wwwroot" -Recurse -Force
+          }
 
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
@@ -84,5 +88,5 @@ jobs:
         with:
           app-name: 'caresphere'
           slot-name: 'Production'
-          package: /home/site/deploy
+          package: D:\home\site\deploy
           publish-profile: ${{ secrets.CARESPHERE_PUBLISHPROFILE }}

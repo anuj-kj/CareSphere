@@ -11,29 +11,17 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: List directory contents
-        run: |
-          echo "Listing repository structure..."
-          Get-ChildItem -Path .
-
-      - name: Verify React project directory
-        run: |
-          if (-Not (Test-Path -Path "carephere.web.spaclient")) {
-            Write-Error "Error: Directory 'carephere.web.spaclient' does not exist!"
-            exit 1
-          }
-
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18.x'  # Upgrade to the latest stable version
+          node-version: '18.x'
 
       - name: Install dependencies for SPA Client
         run: npm install
         working-directory: carephere.web.spaclient
 
       - name: Build SPA Client (Vite)
-        run: npm run build -- --mode production  # Corrected build command
+        run: npm run build -- --mode production
         env:
           NODE_ENV: production
         working-directory: carephere.web.spaclient
@@ -42,7 +30,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: spa-client-build
-          path: carephere.web.spaclient/dist  # Ensure the correct output path
+          path: carephere.web.spaclient/dist
 
   deploy:
     runs-on: windows-latest
@@ -53,30 +41,27 @@ jobs:
     if: github.event_name == 'workflow_dispatch'
 
     steps:
-      - name: Download existing Web API files (to prevent overwrite)
-        uses: azure/appservice-settings@v1
-        with:
-          app-name: 'caresphere'
-          publish-profile: ${{ secrets.CARESPHERE_PUBLISHPROFILE }}
-          slot-name: 'Production'
-          package: ./existing-api
-
       - name: Download SPA Client build artifacts
         uses: actions/download-artifact@v4
         with:
           name: spa-client-build
           path: ./dist
 
-      - name: Merge Web API & React App
+      # 🛑 FIX: Preserve API files before deploying React
+      - name: Preserve Web API files before deploying React
+        shell: pwsh
         run: |
-          mkdir -p ./deploy/wwwroot
-          mv ./existing-api/* ./deploy/
-          mv ./dist/* ./deploy/wwwroot/
+          if (Test-Path "D:\home\site\wwwroot") {
+            Write-Host "Preserving existing Web API..."
+            mkdir -p ./dist/api
+            Copy-Item -Path "D:\home\site\wwwroot\api" -Destination ./dist/api -Recurse -Force
+          }
 
-      - name: Deploy Merged Web API + SPA to Azure Web App
+      # 🛑 FIX: Corrected `azure/webapps-deploy@v3`
+      - name: Deploy SPA Client to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
           app-name: 'caresphere'
           slot-name: 'Production'
-          package: ./deploy
+          package: ./dist
           publish-profile: ${{ secrets.CARESPHERE_PUBLISHPROFILE }}
