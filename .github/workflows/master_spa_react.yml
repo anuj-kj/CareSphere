@@ -1,7 +1,7 @@
 name: Manually Deploy React (Vite) App to Azure Web App - caresphere
 
 on:
-  workflow_dispatch:  # Only manual trigger
+  workflow_dispatch:  # Manual trigger only
 
 jobs:
   build:
@@ -10,15 +10,22 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Debugging Step: Check folder structure
-      - name: List files in repo
+      # Debug: Print folder structure
+      - name: Debug Repository Structure
         run: ls -R
 
-      # Ensure correct directory name (Check and Fix)
-      - name: Verify React project directory
+      # Try different paths if directory is not found
+      - name: Locate React project directory
+        id: find-react-dir
         run: |
-          if [ ! -d "caresphere.web.spaclient" ]; then
-            echo "Error: caresphere.web.spaclient directory not found!"
+          if [ -d "caresphere.web.spaclient" ]; then
+            echo "REACT_DIR=caresphere.web.spaclient" >> $GITHUB_ENV
+          elif [ -d "frontend/caresphere.web.spaclient" ]; then
+            echo "REACT_DIR=frontend/caresphere.web.spaclient" >> $GITHUB_ENV
+          elif [ -d "src/caresphere.web.spaclient" ]; then
+            echo "REACT_DIR=src/caresphere.web.spaclient" >> $GITHUB_ENV
+          else
+            echo "Error: React project directory not found!"
             exit 1
           fi
 
@@ -29,19 +36,19 @@ jobs:
 
       - name: Install dependencies
         run: |
-          cd caresphere.web.spaclient
+          cd $REACT_DIR
           npm install
 
       - name: Build React (Vite) app
         run: |
-          cd caresphere.web.spaclient
+          cd $REACT_DIR
           npm run build --mode production  # Uses .env.production
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: react-app
-          path: caresphere.web.spaclient/dist  # Vite build output
+          path: ${{ env.REACT_DIR }}/dist  # Vite build output
 
   deploy:
     runs-on: ubuntu-latest
@@ -53,15 +60,4 @@ jobs:
 
     steps:
       - name: Download artifact from build job
-        uses: actions/download-artifact@v4
-        with:
-          name: react-app
-
-      - name: Deploy React to Azure Web App
-        id: deploy-to-webapp
-        uses: azure/webapps-deploy@v3
-        with:
-          app-name: 'caresphere'
-          slot-name: 'Production'
-          package: .
-          publish-profile: ${{ secrets.CARESPHERE_PUBLISHPROFILE }}
+        uses: actions
