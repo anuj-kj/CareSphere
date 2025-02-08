@@ -11,13 +11,11 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # Debug: Print directory structure
       - name: List directory contents
         run: |
           echo "Listing repository structure..."
           Get-ChildItem -Path .
 
-      # Verify React project directory exists
       - name: Verify React project directory
         run: |
           if (-Not (Test-Path -Path "carephere.web.spaclient")) {
@@ -55,16 +53,30 @@ jobs:
     if: github.event_name == 'workflow_dispatch'
 
     steps:
+      - name: Download existing Web API files (to prevent overwrite)
+        uses: azure/appservice-settings@v1
+        with:
+          app-name: 'caresphere'
+          publish-profile: ${{ secrets.CARESPHERE_PUBLISHPROFILE }}
+          slot-name: 'Production'
+          package: ./existing-api
+
       - name: Download SPA Client build artifacts
         uses: actions/download-artifact@v4
         with:
           name: spa-client-build
           path: ./dist
 
-      - name: Deploy SPA Client to Azure Web App
+      - name: Merge Web API & React App
+        run: |
+          mkdir -p ./deploy/wwwroot
+          mv ./existing-api/* ./deploy/
+          mv ./dist/* ./deploy/wwwroot/
+
+      - name: Deploy Merged Web API + SPA to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
-          app-name: 'caresphere'  # Change this if your App Service name is different
+          app-name: 'caresphere'
           slot-name: 'Production'
-          package: ./dist
+          package: ./deploy
           publish-profile: ${{ secrets.CARESPHERE_PUBLISHPROFILE }}
