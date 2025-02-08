@@ -36,8 +36,15 @@ jobs:
         run: npm install
         working-directory: carephere.web.spaclient
 
+      - name: Add crypto polyfill
+        run: npm install crypto-browserify
+        working-directory: carephere.web.spaclient
+
       - name: Build SPA Client
-        run: npm run build --if-present
+        run: |
+          echo "Adding crypto polyfill..."
+          echo "import { crypto } from 'crypto-browserify'; global.crypto = crypto;" >> carephere.web.spaclient/src/polyfills.js
+          npm run build --if-present
         env:
           NODE_ENV: production
         working-directory: carephere.web.spaclient
