@@ -26,9 +26,14 @@ jobs:
           echo "Finding all .csproj files..."
           Get-ChildItem -Path . -Recurse -Filter *.csproj | ForEach-Object { dotnet build $_.FullName --configuration Release }
 
-      - name: Run Tests (Using In-Memory Database)
+      - name: Build Test Projects
         run: |
           echo "Finding all test .csproj files..."
+          Get-ChildItem -Path . -Recurse -Filter *Tests.csproj | ForEach-Object { dotnet build $_.FullName --configuration Release }
+
+      - name: Run Tests (Using In-Memory Database)
+        run: |
+          echo "Running tests..."
           Get-ChildItem -Path . -Recurse -Filter *Tests.csproj | ForEach-Object { dotnet test $_.FullName --no-build --verbosity normal }
 
       - name: dotnet publish
