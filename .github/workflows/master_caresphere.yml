@@ -28,20 +28,20 @@ jobs:
           echo "Building all .csproj files (excluding .sqlproj)..."
           Get-ChildItem -Path . -Recurse -Filter *.csproj | Where-Object { $_.FullName -notmatch '\.sqlproj$' } | ForEach-Object { dotnet build $_.FullName --configuration Release }
 
-      # ✅ FIX: Run Tests (Ignoring `.sqlproj`)
+      # ✅ FIX: Run Tests (Only Test Projects)
       - name: Run Tests (Only Test Projects)
         run: |
           echo "Running tests without SQL project..."
           Get-ChildItem -Path . -Recurse -Filter *Tests.csproj | ForEach-Object { dotnet test $_.FullName --no-build --configuration Release --verbosity normal }
 
       - name: dotnet publish
-        run: dotnet publish CareSphere.Web.Server/CareSphere.Web.Server.csproj -c Release -o "${{env.DOTNET_ROOT}}/api"
+        run: dotnet publish CareSphere.Web.Server/CareSphere.Web.Server.csproj -c Release -o "${{env.DOTNET_ROOT}}/myapp"
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: web-api
-          path: ${{env.DOTNET_ROOT}}/api
+          path: ${{env.DOTNET_ROOT}}/myapp
 
   deploy:
     runs-on: windows-latest
@@ -55,12 +55,11 @@ jobs:
         with:
           name: web-api
 
-      - name: Deploy Web API to `/api/` directory
+      - name: Deploy Web API (No `target-path`)
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
           app-name: 'caresphere'
           slot-name: 'Production'
           package: .
-          target-path: '/api'  # ✅ Fix: Deploy Web API to `/api/`
           publish-profile: ${{ secrets.CARESPHERE_PUBLISHPROFILE }}
