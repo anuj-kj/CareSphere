@@ -1,4 +1,4 @@
-name: Build and deploy ASP.Net Core app to Azure Web App - caresphere
+name: Build and deploy ASP.Net Core API to Azure Web App - caresphere
 
 on:
   push:
@@ -22,51 +22,42 @@ jobs:
       - name: Restore NuGet packages
         run: dotnet restore
 
-      # ✅ FIX: Use `dotnet sln` to remove `.sqlproj` before build
-      - name: Exclude `.sqlproj` from Build
-        run: dotnet sln CareSphere.sln remove CareSphere.DB/CareSphere.DB.sqlproj
-
-      # ✅ FIX: Build only `.csproj` projects (No `.sqlproj`)
-      - name: Build Only C# Projects (Ignoring `.sqlproj`)
+      # ✅ FIX: Ignore `.sqlproj` (no need to remove it)
+      - name: Build Web API (Ignoring `.sqlproj`)
         run: |
           echo "Building all .csproj files (excluding .sqlproj)..."
           Get-ChildItem -Path . -Recurse -Filter *.csproj | Where-Object { $_.FullName -notmatch '\.sqlproj$' } | ForEach-Object { dotnet build $_.FullName --configuration Release }
 
-      - name: Build Test Projects
-        run: |
-          echo "Building test projects..."
-          Get-ChildItem -Path . -Recurse -Filter *Tests.csproj | Where-Object { $_.FullName -notmatch '\.sqlproj$' } | ForEach-Object { dotnet build $_.FullName --configuration Debug }
-
       - name: Run Tests (Using In-Memory Database)
-        run: dotnet test --no-build --verbosity normal
+        run: dotnet test --no-build --configuration Release --verbosity normal
 
       - name: dotnet publish
-        run: dotnet publish CareSphere.Web.Server/CareSphere.Web.Server.csproj -c Release -o "${{env.DOTNET_ROOT}}/myapp"
+        run: dotnet publish CareSphere.Web.Server/CareSphere.Web.Server.csproj -c Release -o "${{env.DOTNET_ROOT}}/api"
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
-          name: .net-app
-          path: ${{env.DOTNET_ROOT}}/myapp
+          name: web-api
+          path: ${{env.DOTNET_ROOT}}/api
 
   deploy:
     runs-on: windows-latest
     needs: build
     environment:
       name: 'Production'
-      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
 
     steps:
       - name: Download artifact from build job
         uses: actions/download-artifact@v4
         with:
-          name: .net-app
+          name: web-api
 
-      - name: Deploy to Azure Web App
+      - name: Deploy Web API to `/api/` directory
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
           app-name: 'caresphere'
           slot-name: 'Production'
           package: .
+          target-path: '/api'  # ✅ Fix: Deploy Web API to `/api/`
           publish-profile: ${{ secrets.CARESPHERE_PUBLISHPROFILE }}
