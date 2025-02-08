@@ -1,4 +1,4 @@
-name: Build and deploy ASP.Net Core app to Azure Web App - caresphere
+name: Deploy CareSphere Web API
 
 on:
   push:
@@ -22,20 +22,10 @@ jobs:
       - name: Restore NuGet packages
         run: dotnet restore
 
-      # ✅ FIX: Use `dotnet sln` to remove `.sqlproj` before build
-      - name: Exclude `.sqlproj` from Build
-        run: dotnet sln CareSphere.sln remove CareSphere.DB/CareSphere.DB.sqlproj
-
-      # ✅ FIX: Build only `.csproj` projects (No `.sqlproj`)
       - name: Build Only C# Projects (Ignoring `.sqlproj`)
         run: |
-          echo "Building all .csproj files (excluding .sqlproj)..."
+          echo "Building all .csproj files..."
           Get-ChildItem -Path . -Recurse -Filter *.csproj | Where-Object { $_.FullName -notmatch '\.sqlproj$' } | ForEach-Object { dotnet build $_.FullName --configuration Release }
-
-      - name: Build Test Projects
-        run: |
-          echo "Building test projects..."
-          Get-ChildItem -Path . -Recurse -Filter *Tests.csproj | Where-Object { $_.FullName -notmatch '\.sqlproj$' } | ForEach-Object { dotnet build $_.FullName --configuration Debug }
 
       - name: Run Tests (Using In-Memory Database)
         run: dotnet test --no-build --verbosity normal
@@ -43,10 +33,20 @@ jobs:
       - name: dotnet publish
         run: dotnet publish CareSphere.Web.Server/CareSphere.Web.Server.csproj -c Release -o "${{env.DOTNET_ROOT}}/myapp"
 
-      - name: Upload artifact for deployment job
+      # ✅ Preserve React (`wwwroot`) Before Deploying API
+      - name: Preserve React Frontend (`wwwroot`)
+        shell: pwsh
+        run: |
+          if (Test-Path "D:\home\site\wwwroot") {
+            Write-Host "Preserving existing React app..."
+            mkdir -p "${{env.DOTNET_ROOT}}/myapp/wwwroot"
+            Copy-Item -Path "D:\home\site\wwwroot\*" -Destination "${{env.DOTNET_ROOT}}/myapp/wwwroot" -Recurse -Force
+          }
+
+      - name: Upload API Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: .net-app
+          name: web-api
           path: ${{env.DOTNET_ROOT}}/myapp
 
   deploy:
@@ -57,13 +57,12 @@ jobs:
       url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
 
     steps:
-      - name: Download artifact from build job
+      - name: Download API Artifact
         uses: actions/download-artifact@v4
         with:
-          name: .net-app
+          name: web-api
 
-      - name: Deploy to Azure Web App
-        id: deploy-to-webapp
+      - name: Deploy Web API to Azure
         uses: azure/webapps-deploy@v3
         with:
           app-name: 'caresphere'
