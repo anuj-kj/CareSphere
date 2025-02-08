@@ -13,6 +13,7 @@ using Microsoft.Extensions.Logging;
 using CareSphere.Web.Server.Configs;
 using Microsoft.EntityFrameworkCore;
 using CareSphere.Data.Configurations;
+using Microsoft.Extensions.FileProviders;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -136,6 +137,19 @@ try
     app.UseAuthorization();
 
     app.MapControllers();
+    // ? Serve React from `/app/`
+    app.UseDefaultFiles(new DefaultFilesOptions
+    {
+        DefaultFileNames = new List<string> { "index.html" }
+    });
+    app.UseStaticFiles(new StaticFileOptions
+    {
+        FileProvider = new PhysicalFileProvider(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "app")),
+        RequestPath = "/app"
+    });
+
+    // ? Ensure React handles all unknown routes (except API calls)
+    app.MapFallbackToFile("/app/index.html");
 
     app.Run();
 }

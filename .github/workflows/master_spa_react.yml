@@ -45,17 +45,8 @@ jobs:
           name: spa-client-build
           path: ./react-temp
 
-      # ✅ Deploy to `wwwroot` first
-      - name: Deploy SPA Client to Azure Web App
-        uses: azure/webapps-deploy@v3
-        with:
-          app-name: 'caresphere'
-          slot-name: 'Production'
-          package: ./react-temp
-          publish-profile: ${{ secrets.CARESPHERE_PUBLISHPROFILE }}
-
-      # ✅ Fix: Move React Build to `/app/`
-      - name: Move React Build to `/app/`
+      # ✅ Move React files ONLY to `/app/` (Avoid touching API)
+      - name: Deploy SPA Client to `/app/`
         shell: pwsh
         run: |
           $wwwroot = "D:\home\site\wwwroot"
@@ -66,9 +57,9 @@ jobs:
             New-Item -ItemType Directory -Force -Path $appPath
           }
 
-          # Move React files to `/app/`
-          Get-ChildItem -Path $wwwroot -Exclude "api", "app" -Recurse | ForEach-Object {
+          # ✅ Move React files ONLY to `/app/` (without touching API files)
+          Get-ChildItem -Path ./react-temp -Recurse | ForEach-Object {
               Move-Item -Path $_.FullName -Destination $appPath -Force
           }
 
-          Write-Host "✅ React App successfully moved to /app/"
+          Write-Host "✅ React App successfully deployed to /app/"
