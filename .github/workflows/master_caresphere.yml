@@ -22,7 +22,7 @@ jobs:
       - name: Restore NuGet packages
         run: dotnet restore
 
-      # ✅ FIX: Ignore `.sqlproj` (no need to remove it)
+      # ✅ FIX: Ignore `.sqlproj` during build
       - name: Build Web API (Ignoring `.sqlproj`)
         run: |
           echo "Building all .csproj files (excluding .sqlproj)..."
