@@ -39,6 +39,15 @@ jobs:
       - name: dotnet publish
         run: dotnet publish CareSphere.Web.Server/CareSphere.Web.Server.csproj -c Release -o "${{env.DOTNET_ROOT}}/myapp"
 
+      # 🛑 FIX: Preserve existing `wwwroot/` folder before deployment
+      - name: Preserve React frontend (`wwwroot`)
+        run: |
+          if [ -d "/home/site/wwwroot" ]; then
+            echo "Preserving existing React app..."
+            mkdir -p "${{env.DOTNET_ROOT}}/myapp/wwwroot"
+            cp -r /home/site/wwwroot/* "${{env.DOTNET_ROOT}}/myapp/wwwroot/"
+          fi
+
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
@@ -52,18 +61,28 @@ jobs:
       name: 'Production'
       url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
     if: github.event_name == 'workflow_dispatch'
-    
+
     steps:
       - name: Download artifact from build job
         uses: actions/download-artifact@v4
         with:
           name: .net-app
-      
+
+      # 🛑 FIX: Ensure React remains untouched during deployment
+      - name: Merge Web API with existing React frontend
+        run: |
+          echo "Merging Web API deployment with existing React frontend..."
+          mkdir -p /home/site/deploy
+          cp -r . /home/site/deploy
+          if [ -d "/home/site/wwwroot" ]; then
+            cp -r /home/site/wwwroot/* /home/site/deploy/wwwroot/
+          fi
+
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
           app-name: 'caresphere'
           slot-name: 'Production'
-          package: .
+          package: /home/site/deploy
           publish-profile: ${{ secrets.CARESPHERE_PUBLISHPROFILE }}
