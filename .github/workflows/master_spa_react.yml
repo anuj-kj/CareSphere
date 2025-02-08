@@ -19,6 +19,14 @@ jobs:
         with:
           node-version: '16.x'
 
+      - name: Verify working directory
+        run: |
+          echo "Verifying working directory..."
+          if [ ! -d "CareSphere.Web.SPAClient" ]; then
+            echo "Directory CareSphere.Web.SPAClient does not exist."
+            exit 1
+          fi
+
       - name: Install dependencies for SPA Client
         run: npm install
         working-directory: CareSphere.Web.SPAClient
