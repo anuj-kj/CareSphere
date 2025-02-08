@@ -40,11 +40,19 @@ jobs:
         run: npm install crypto-browserify
         working-directory: carephere.web.spaclient
 
-      - name: Build SPA Client
+      - name: Create polyfills.js if it does not exist
         run: |
-          echo "Adding crypto polyfill..."
+          if (-Not (Test-Path -Path "carephere.web.spaclient/src/polyfills.js")) {
+            New-Item -ItemType File -Path "carephere.web.spaclient/src/polyfills.js"
+          }
+
+      - name: Add crypto polyfill to polyfills.js
+        run: |
           echo "import { crypto } from 'crypto-browserify'; global.crypto = crypto;" >> carephere.web.spaclient/src/polyfills.js
-          npm run build --if-present
+        working-directory: carephere.web.spaclient
+
+      - name: Build SPA Client
+        run: npm run build --if-present
         env:
           NODE_ENV: production
         working-directory: carephere.web.spaclient
