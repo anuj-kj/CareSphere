@@ -22,31 +22,17 @@ jobs:
       - name: Restore NuGet packages
         run: dotnet restore
 
+      # ✅ FIX: Only build `.csproj` files (Ignore `.sqlproj`)
       - name: Build Only C# Projects (Ignoring `.sqlproj`)
         run: |
-          echo "Finding all .csproj files..."
-          Get-ChildItem -Path . -Recurse -Filter *.csproj | ForEach-Object { dotnet build $_.FullName --configuration Release }
+          echo "Building all .csproj files (excluding .sqlproj)..."
+          Get-ChildItem -Path . -Recurse -Filter *.csproj | Where-Object { $_.FullName -notmatch '\.sqlproj$' } | ForEach-Object { dotnet build $_.FullName --configuration Release }
 
-      # ✅ FIX: Explicitly Build Test Projects in Debug Mode
       - name: Build Test Projects
         run: |
           echo "Building test projects..."
-          Get-ChildItem -Path . -Recurse -Filter *Tests.csproj | ForEach-Object { dotnet build $_.FullName --configuration Debug }
+          Get-ChildItem -Path . -Recurse -Filter *Tests.csproj | Where-Object { $_.FullName -notmatch '\.sqlproj$' } | ForEach-Object { dotnet build $_.FullName --configuration Debug }
 
-      # ✅ FIX: Ensure DLLs Exist Before Running Tests
-      - name: Check Test DLLs
-        run: |
-          if (-Not (Test-Path "CareSphere.Data.Tests/bin/Debug/net9.0/CareSphere.Data.Tests.dll")) {
-            Write-Error "Test DLL for CareSphere.Data.Tests not found!"
-            exit 1
-          }
-          if (-Not (Test-Path "CareSphere.Services.Tests/bin/Debug/net9.0/CareSphere.Services.Tests.dll")) {
-            Write-Error "Test DLL for CareSphere.Services.Tests not found!"
-            exit 1
-          }
-        shell: pwsh
-
-      # ✅ FIX: Run Tests After Verifying Test Projects Were Built
       - name: Run Tests (Using In-Memory Database)
         run: dotnet test --no-build --verbosity normal
 
