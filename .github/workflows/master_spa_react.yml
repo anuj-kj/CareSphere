@@ -23,7 +23,8 @@ jobs:
       - name: Build SPA Client (Vite)
         run: npm run build -- --mode production
         env:
-          NODE_ENV: production  # ✅ Ensure production mode
+          NODE_ENV: production
+          VITE_BASE_PATH: "/app/"  # ✅ Ensure `/app/` is used
         working-directory: carephere.web.spaclient
 
       - name: Upload SPA Client build artifacts
@@ -45,19 +46,19 @@ jobs:
           name: spa-client-build
           path: ./react-temp
 
-      # ✅ Move React files ONLY to `/app/` (Avoid touching API)
+      # ✅ Ensure `/app/` directory exists before deploying
       - name: Deploy SPA Client to `/app/`
         shell: pwsh
         run: |
           $wwwroot = "D:\home\site\wwwroot"
           $appPath = "$wwwroot\app"
 
-          # Ensure `/app` directory exists
+          # Create `/app/` directory if it does not exist
           if (-Not (Test-Path $appPath)) {
             New-Item -ItemType Directory -Force -Path $appPath
           }
 
-          # ✅ Move React files ONLY to `/app/` (without touching API files)
+          # Move React build files to `/wwwroot/app/`
           Get-ChildItem -Path ./react-temp -Recurse | ForEach-Object {
               Move-Item -Path $_.FullName -Destination $appPath -Force
           }
