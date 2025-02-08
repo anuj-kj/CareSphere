@@ -22,7 +22,11 @@ jobs:
       - name: Restore NuGet packages
         run: dotnet restore
 
-      # ✅ FIX: Only build `.csproj` files (Ignore `.sqlproj`)
+      # ✅ FIX: Use `dotnet sln` to remove `.sqlproj` before build
+      - name: Exclude `.sqlproj` from Build
+        run: dotnet sln CareSphere.sln remove CareSphere.DB/CareSphere.DB.sqlproj
+
+      # ✅ FIX: Build only `.csproj` projects (No `.sqlproj`)
       - name: Build Only C# Projects (Ignoring `.sqlproj`)
         run: |
           echo "Building all .csproj files (excluding .sqlproj)..."
