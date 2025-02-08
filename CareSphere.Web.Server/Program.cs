@@ -137,19 +137,7 @@ try
     app.UseAuthorization();
 
     app.MapControllers();
-    // ? Serve React from `/app/`
-    app.UseDefaultFiles(new DefaultFilesOptions
-    {
-        DefaultFileNames = new List<string> { "index.html" }
-    });
-    app.UseStaticFiles(new StaticFileOptions
-    {
-        FileProvider = new PhysicalFileProvider(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "app")),
-        RequestPath = "/app"
-    });
-
-    // ? Ensure React handles all unknown routes (except API calls)
-    app.MapFallbackToFile("/app/index.html");
+    app.UseStaticFiles();
 
     app.Run();
 }
