@@ -55,7 +55,22 @@ jobs:
         with:
           name: web-api
 
-      - name: Deploy Web API (No `target-path`)
+      # ✅ FIX: Preserve React (`/app/`) Before Deploying API
+      - name: Preserve React (`/app/`) Before API Deployment
+        shell: pwsh
+        run: |
+          $wwwroot = "D:\home\site\wwwroot"
+          $appPath = "$wwwroot\app"
+          $tempPath = "D:\home\site\temp-app"
+
+          # If `/app/` exists, move it to a temporary location
+          if (Test-Path $appPath) {
+              Write-Host "✅ Preserving existing React app (/app/)..."
+              Move-Item -Path $appPath -Destination $tempPath -Force
+          }
+
+      # ✅ Deploy Web API (Avoid Overwriting `/app/`)
+      - name: Deploy Web API
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
@@ -63,3 +78,17 @@ jobs:
           slot-name: 'Production'
           package: .
           publish-profile: ${{ secrets.CARESPHERE_PUBLISHPROFILE }}
+
+      # ✅ Restore React (`/app/`) After API Deployment
+      - name: Restore React (`/app/`) After API Deployment
+        shell: pwsh
+        run: |
+          $wwwroot = "D:\home\site\wwwroot"
+          $appPath = "$wwwroot\app"
+          $tempPath = "D:\home\site\temp-app"
+
+          # If the temp `/app/` exists, move it back to `wwwroot`
+          if (Test-Path $tempPath) {
+              Write-Host "✅ Restoring React app (/app/) after API deployment..."
+              Move-Item -Path $tempPath -Destination $appPath -Force
+          }
