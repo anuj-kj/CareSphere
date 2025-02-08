@@ -6,7 +6,7 @@ export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, process.cwd(), '');
 
     return {
-        base: env.VITE_BASE_PATH || "/app/",  // ✅ Ensure `/app/` is used
+        base: env.VITE_BASE_PATH || "/app/",  // ✅ Ensure React uses `/app/`
         plugins: [react()],
         server: {
             port: 53590,
@@ -17,11 +17,13 @@ export default defineConfig(({ mode }) => {
             VITE_APP_URI: JSON.stringify(env.VITE_APP_URI),
         },
         build: {
-            outDir: "dist",
-            emptyOutDir: true,
-            minify: "esbuild",
-            sourcemap: false,
+            outDir: "dist",  // ✅ Ensure build output is placed in `dist/`
+            emptyOutDir: true,  // ✅ Clears the output directory before building
+            minify: "esbuild",  // ✅ Enables minification
+            sourcemap: false,  // ✅ Disables source maps for production
+            rollupOptions: {
+                input: path.resolve(__dirname, "index.html"),  // ✅ Fix: Ensure Vite finds `index.html`
+            },
         },
-        envDir: path.resolve(__dirname),  // ✅ Ensure environment variables are loaded from `.env.production`
     };
 });
