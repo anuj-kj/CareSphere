@@ -21,34 +21,18 @@ jobs:
       - name: Restore NuGet packages
         run: dotnet restore
 
-      - name: Build all projects (excluding `.sqlproj`)
+      - name: Build only C# projects (ignore .sqlproj)
         run: |
           echo "Finding all .csproj files..."
           Get-ChildItem -Path . -Recurse -Filter *.csproj | ForEach-Object { dotnet build $_.FullName --configuration Release }
 
-      - name: Build Test Projects (Ensures DLLs exist)
-        run: |
-          echo "Building test projects..."
-          Get-ChildItem -Path . -Recurse -Filter *Tests.csproj | ForEach-Object { dotnet build $_.FullName --configuration Debug }
-
       - name: Run Tests (Using In-Memory Database)
         run: |
-          echo "Running tests..."
+          echo "Finding all test .csproj files..."
           Get-ChildItem -Path . -Recurse -Filter *Tests.csproj | ForEach-Object { dotnet test $_.FullName --no-build --verbosity normal }
 
       - name: dotnet publish
         run: dotnet publish CareSphere.Web.Server/CareSphere.Web.Server.csproj -c Release -o "${{env.DOTNET_ROOT}}/myapp"
-
-      # 🛑 FIX: Preserve existing React frontend (`wwwroot/`) using PowerShell
-      - name: Preserve React frontend (`wwwroot`)
-        shell: pwsh
-        run: |
-          $wwwrootPath = "$env:DOTNET_ROOT\myapp\wwwroot"
-          if (Test-Path "D:\home\site\wwwroot") {
-            Write-Host "Preserving existing React app..."
-            New-Item -ItemType Directory -Force -Path $wwwrootPath
-            Copy-Item -Path "D:\home\site\wwwroot\*" -Destination $wwwrootPath -Recurse -Force
-          }
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
@@ -62,31 +46,18 @@ jobs:
     environment:
       name: 'Production'
       url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
-    if: github.event_name == 'workflow_dispatch'
-
+    
     steps:
       - name: Download artifact from build job
         uses: actions/download-artifact@v4
         with:
           name: .net-app
-
-      # 🛑 FIX: Ensure Web API does NOT delete the React frontend during deployment
-      - name: Merge Web API with existing React frontend
-        shell: pwsh
-        run: |
-          Write-Host "Merging Web API deployment with existing React frontend..."
-          $deployPath = "D:\home\site\deploy"
-          New-Item -ItemType Directory -Force -Path $deployPath
-          Copy-Item -Path "." -Destination $deployPath -Recurse -Force
-          if (Test-Path "D:\home\site\wwwroot") {
-            Copy-Item -Path "D:\home\site\wwwroot\*" -Destination "$deployPath\wwwroot" -Recurse -Force
-          }
-
+      
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
           app-name: 'caresphere'
           slot-name: 'Production'
-          package: D:\home\site\deploy
+          package: .
           publish-profile: ${{ secrets.CARESPHERE_PUBLISHPROFILE }}
