@@ -1,57 +1,51 @@
-name: Manually Deploy React (Vite) App to Azure Web App - caresphere
+name: Deploy CareSphere SPA Client
 
 on:
   workflow_dispatch:  # Manual trigger only
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      # Debug: Print folder structure
-      - name: Debug Repository Structure
-        run: ls -R
-
-      # Try different paths if directory is not found
-      - name: Locate React project directory
-        id: find-react-dir
+      - name: List directory contents
         run: |
-          if [ -d "caresphere.web.spaclient" ]; then
-            echo "REACT_DIR=caresphere.web.spaclient" >> $GITHUB_ENV
-          elif [ -d "frontend/caresphere.web.spaclient" ]; then
-            echo "REACT_DIR=frontend/caresphere.web.spaclient" >> $GITHUB_ENV
-          elif [ -d "src/caresphere.web.spaclient" ]; then
-            echo "REACT_DIR=src/caresphere.web.spaclient" >> $GITHUB_ENV
-          else
-            echo "Error: React project directory not found!"
-            exit 1
-          fi
+          echo "Listing directory contents..."
+          Get-ChildItem -Path .
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18.x'
+          node-version: '18.x'  # Use a newer version
 
-      - name: Install dependencies
+      - name: Verify React project directory
         run: |
-          cd $REACT_DIR
-          npm install
+          if (-Not (Test-Path -Path "carephere.web.spaclient")) {
+            Write-Error "Directory carephere.web.spaclient does not exist."
+            exit 1
+          }
 
-      - name: Build React (Vite) app
-        run: |
-          cd $REACT_DIR
-          npm run build --mode production  # Uses .env.production
+      - name: Install dependencies for SPA Client
+        run: npm install
+        working-directory: carephere.web.spaclient
 
-      - name: Upload artifact for deployment job
+      - name: Build SPA Client (Vite)
+        run: npm run build --mode production  # Uses .env.production
+        env:
+          NODE_ENV: production
+        working-directory: carephere.web.spaclient
+
+      - name: Upload SPA Client build artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: react-app
-          path: ${{ env.REACT_DIR }}/dist  # Vite build output
+          name: spa-client-build
+          path: carephere.web.spaclient/dist  # Ensures correct path
 
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     needs: build
     environment:
       name: 'Production'
@@ -59,5 +53,16 @@ jobs:
     if: github.event_name == 'workflow_dispatch'
 
     steps:
-      - name: Download artifact from build job
-        uses: actions
+      - name: Download SPA Client build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: spa-client-build
+          path: ./dist
+
+      - name: Deploy SPA Client to Azure Web App
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: 'caresphere'
+          slot-name: 'Production'
+          package: ./dist
+          publish-profile: ${{ secrets.CARESPHERE_PUBLISHPROFILE }}
