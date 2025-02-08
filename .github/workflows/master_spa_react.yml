@@ -27,26 +27,26 @@ jobs:
       - name: Verify working directory
         run: |
           Write-Host "Verifying working directory..."
-          if (-Not (Test-Path -Path "CareSphere.Web.SPAClient")) {
-            Write-Error "Directory CareSphere.Web.SPAClient does not exist."
+          if (-Not (Test-Path -Path "carephere.web.spaclient")) {
+            Write-Error "Directory carephere.web.spaclient does not exist."
             exit 1
           }
 
       - name: Install dependencies for SPA Client
         run: npm install
-        working-directory: CareSphere.Web.SPAClient
+        working-directory: carephere.web.spaclient
 
       - name: Build SPA Client
         run: npm run build --if-present
         env:
           NODE_ENV: production
-        working-directory: CareSphere.Web.SPAClient
+        working-directory: carephere.web.spaclient
 
       - name: Upload SPA Client build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: spa-client-build
-          path: CareSphere.Web.SPAClient/dist
+          path: carephere.web.spaclient/dist
 
   deploy:
     runs-on: windows-latest
