@@ -46,7 +46,7 @@ jobs:
           name: spa-client-build
           path: ./react-temp
 
-      # ✅ Fix: Create `/app/` if missing
+      # ✅ Ensure `/app/` exists
       - name: Ensure `/app/` directory exists
         shell: pwsh
         run: |
@@ -58,7 +58,7 @@ jobs:
             New-Item -ItemType Directory -Path $appPath -Force
           }
 
-      # ✅ Fix: Move React build files to `/app/`
+      # ✅ Fix: Deploy React files to `/app/`
       - name: Deploy SPA Client to `/app/`
         shell: pwsh
         run: |
@@ -66,8 +66,6 @@ jobs:
           $appPath = "$wwwroot\app"
 
           Write-Host "✅ Deploying React to /app/..."
-          Get-ChildItem -Path ./react-temp -Recurse | ForEach-Object {
-              Move-Item -Path $_.FullName -Destination $appPath -Force
-          }
+          Copy-Item -Path ./react-temp/* -Destination $appPath -Recurse -Force
 
           Write-Host "✅ React App successfully deployed to /app/"
