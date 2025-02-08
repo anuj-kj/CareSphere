@@ -14,6 +14,7 @@ export default defineConfig(({ mode }) => {
             // Expose environment variables for use in code
             _GOOGLE_CLIENT_ID: JSON.stringify(env.VITE_GOOGLE_CLIENT_ID),
             __APP_ENV__: JSON.stringify(env.VITE_APP_ENV),
+            VITE_APP_URI: JSON.stringify(env.VITE_APP_URI),
         },
     };
 });

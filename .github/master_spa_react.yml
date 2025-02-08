@@ -1,0 +1,60 @@
+name: Deploy CareSphere SPA Client
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '16.x'
+
+      - name: Install dependencies for SPA Client
+        run: npm install
+        working-directory: CareSphere.Web.SPAClient
+
+      - name: Build SPA Client
+        run: npm run build --if-present
+        env:
+          NODE_ENV: production
+        working-directory: CareSphere.Web.SPAClient
+
+      - name: Upload SPA Client build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: spa-client-build
+          path: CareSphere.Web.SPAClient/dist
+
+  deploy:
+    runs-on: windows-latest
+    needs: build
+    environment:
+      name: 'Production'
+      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
+    if: github.event_name == 'workflow_dispatch'
+
+    steps:
+      - name: Download SPA Client build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: spa-client-build
+          path: ./dist
+
+      - name: Deploy SPA Client to Azure Web App
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: 'caresphere'
+          slot-name: 'Production'
+          package: ./dist
+          publish-profile: ${{ secrets.CARESPHERE_PUBLISHPROFILE }}
+          target-path: 'wwwroot'

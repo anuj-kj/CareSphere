@@ -2,7 +2,7 @@ import axios from 'axios';
 import { isTokenExpired } from '../utils/tokenUtils';
 
 const axiosInstance = axios.create({
-    baseURL: 'http://localhost:5158/api',
+    baseURL: import.meta.env.VITE_APP_URI,
     headers: { 'Content-Type': 'application/json' },
 });
 
