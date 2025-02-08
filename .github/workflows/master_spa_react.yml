@@ -46,26 +46,21 @@ jobs:
           name: spa-client-build
           path: ./react-temp
 
-      # ✅ Ensure `/app/` exists
-      - name: Ensure `/app/` directory exists
+      # ✅ Ensure `/app/` exists before deployment
+      - name: Create `/app/` Directory
         shell: pwsh
         run: |
-          $wwwroot = "D:\home\site\wwwroot"
-          $appPath = "$wwwroot\app"
-
+          $appPath = "D:\home\site\wwwroot\app"
           if (-Not (Test-Path $appPath)) {
             Write-Host "✅ Creating /app/ directory..."
             New-Item -ItemType Directory -Path $appPath -Force
           }
 
-      # ✅ Fix: Deploy React files to `/app/`
+      # ✅ Deploy React App to `/app/`
       - name: Deploy SPA Client to `/app/`
         shell: pwsh
         run: |
-          $wwwroot = "D:\home\site\wwwroot"
-          $appPath = "$wwwroot\app"
-
+          $appPath = "D:\home\site\wwwroot\app"
           Write-Host "✅ Deploying React to /app/..."
           Copy-Item -Path ./react-temp/* -Destination $appPath -Recurse -Force
-
           Write-Host "✅ React App successfully deployed to /app/"
