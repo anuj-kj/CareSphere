@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom';
+
 export default function Hero() {
     return (
         <div className="bg-light text-center py-5">
@@ -6,9 +8,9 @@ export default function Hero() {
                 <p className="lead">
                     This is a simple, responsive template built with React, Vite, and Bootstrap.
                 </p>
-                <a href="/organizations" className="btn btn-primary btn-lg">
+                <Link to="/organizations" className="btn btn-primary btn-lg">
                     Learn More
-                </a>
+                </Link>
             </div>
         </div>
     );

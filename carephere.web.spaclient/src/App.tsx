@@ -38,10 +38,11 @@ const Home = () => (
 
 const About = () => <div className="container py-5"><h1>About Page</h1></div>;
 
-
 function App() {
+    const base = import.meta.env.VITE_BASE_PATH || "/app/";
+
     return (
-        <Router>
+        <Router basename={base}>
             <Navbar />
             <Routes>
                 <Route path="/" element={<Home />} />

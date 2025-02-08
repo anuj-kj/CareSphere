@@ -23,8 +23,7 @@ jobs:
       - name: Build SPA Client (Vite)
         run: npm run build -- --mode production
         env:
-          NODE_ENV: production
-          VITE_BASE_PATH: "/app/"  # ✅ Fix: Ensure React uses `/app/`
+          NODE_ENV: production  # ✅ Ensure production mode
         working-directory: carephere.web.spaclient
 
       - name: Upload SPA Client build artifacts
@@ -44,15 +43,30 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: spa-client-build
-          path: ./app
+          path: ./react-temp
 
-      # ❌ REMOVE: No need to preserve Web API files anymore
-
-      - name: Deploy SPA Client to `/app` directory
+      # ✅ Deploy to `wwwroot` first
+      - name: Deploy SPA Client to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
           app-name: 'caresphere'
           slot-name: 'Production'
-          package: ./app
-          target-path: '/app'  # ✅ Fix: Deploy React to `/app`
+          package: ./react-temp
           publish-profile: ${{ secrets.CARESPHERE_PUBLISHPROFILE }}
+
+      # ✅ Move React files from `wwwroot` to `wwwroot/app` manually
+      - name: Move React Build to `/app/`
+        shell: pwsh
+        run: |
+          $wwwroot = "D:\home\site\wwwroot"
+          $appPath = "$wwwroot\app"
+
+          # Ensure `/app` directory exists
+          if (-Not (Test-Path $appPath)) {
+            New-Item -ItemType Directory -Force -Path $appPath
+          }
+
+          # Move all React files to `/app/`
+          Get-ChildItem -Path $wwwroot -Exclude "api", "app" | Move-Item -Destination $appPath -Force -Recurse
+
+          Write-Host "✅ React App successfully moved to /app/"
