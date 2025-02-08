@@ -14,6 +14,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: List directory contents
+        run: |
+          Write-Host "Listing directory contents..."
+          Get-ChildItem -Path .
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
