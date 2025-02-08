@@ -8,32 +8,34 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      - name: Checkout code
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
+      # Debug: Print directory structure
       - name: List directory contents
         run: |
-          echo "Listing directory contents..."
+          echo "Listing repository structure..."
           Get-ChildItem -Path .
+
+      # Verify React project directory exists
+      - name: Verify React project directory
+        run: |
+          if (-Not (Test-Path -Path "carephere.web.spaclient")) {
+            Write-Error "Error: Directory 'carephere.web.spaclient' does not exist!"
+            exit 1
+          }
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18.x'  # Use a newer version
-
-      - name: Verify React project directory
-        run: |
-          if (-Not (Test-Path -Path "carephere.web.spaclient")) {
-            Write-Error "Directory carephere.web.spaclient does not exist."
-            exit 1
-          }
+          node-version: '18.x'  # Upgrade to the latest stable version
 
       - name: Install dependencies for SPA Client
         run: npm install
         working-directory: carephere.web.spaclient
 
       - name: Build SPA Client (Vite)
-        run: npm run build --mode production  # Uses .env.production
+        run: npm run build -- --mode production  # Corrected build command
         env:
           NODE_ENV: production
         working-directory: carephere.web.spaclient
@@ -42,7 +44,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: spa-client-build
-          path: carephere.web.spaclient/dist  # Ensures correct path
+          path: carephere.web.spaclient/dist  # Ensure the correct output path
 
   deploy:
     runs-on: windows-latest
@@ -62,7 +64,7 @@ jobs:
       - name: Deploy SPA Client to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
-          app-name: 'caresphere'
+          app-name: 'caresphere'  # Change this if your App Service name is different
           slot-name: 'Production'
           package: ./dist
           publish-profile: ${{ secrets.CARESPHERE_PUBLISHPROFILE }}
