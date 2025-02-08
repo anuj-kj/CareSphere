@@ -1,7 +1,7 @@
 name: Manually Deploy React (Vite) App to Azure Web App - caresphere
 
 on:
-  workflow_dispatch:  # Manual trigger only
+  workflow_dispatch:  # Only manual trigger
 
 jobs:
   build:
@@ -10,10 +10,22 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Debugging Step: Check folder structure
+      - name: List files in repo
+        run: ls -R
+
+      # Ensure correct directory name (Check and Fix)
+      - name: Verify React project directory
+        run: |
+          if [ ! -d "caresphere.web.spaclient" ]; then
+            echo "Error: caresphere.web.spaclient directory not found!"
+            exit 1
+          fi
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18.x'  # Adjust based on your setup
+          node-version: '18.x'
 
       - name: Install dependencies
         run: |
