@@ -24,6 +24,7 @@ jobs:
         run: npm run build -- --mode production
         env:
           NODE_ENV: production
+          VITE_BASE_PATH: "/app/"  # ✅ Fix: Ensure React uses `/app/`
         working-directory: carephere.web.spaclient
 
       - name: Upload SPA Client build artifacts
@@ -37,31 +38,21 @@ jobs:
     needs: build
     environment:
       name: 'Production'
-      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
-    if: github.event_name == 'workflow_dispatch'
 
     steps:
       - name: Download SPA Client build artifacts
         uses: actions/download-artifact@v4
         with:
           name: spa-client-build
-          path: ./dist
+          path: ./app
 
-      # 🛑 FIX: Preserve API files before deploying React
-      - name: Preserve Web API files before deploying React
-        shell: pwsh
-        run: |
-          if (Test-Path "D:\home\site\wwwroot") {
-            Write-Host "Preserving existing Web API..."
-            mkdir -p ./dist/api
-            Copy-Item -Path "D:\home\site\wwwroot\api" -Destination ./dist/api -Recurse -Force
-          }
+      # ❌ REMOVE: No need to preserve Web API files anymore
 
-      # 🛑 FIX: Corrected `azure/webapps-deploy@v3`
-      - name: Deploy SPA Client to Azure Web App
+      - name: Deploy SPA Client to `/app` directory
         uses: azure/webapps-deploy@v3
         with:
           app-name: 'caresphere'
           slot-name: 'Production'
-          package: ./dist
+          package: ./app
+          target-path: '/app'  # ✅ Fix: Deploy React to `/app`
           publish-profile: ${{ secrets.CARESPHERE_PUBLISHPROFILE }}
